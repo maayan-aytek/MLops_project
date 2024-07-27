@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Index{% endblock %}
+{% block content %}
+<h1>Upload Image</h1>
+<input type="file" id="fileInput">
+<button onclick="uploadImage()">Upload</button>
+<p></p>
+<img id="uploadedImage" src="" alt="Uploaded Image" style="display: none; max-width: 100%; height: auto;">
+<h3 id="classificationResult"></h3>
+
+<script>
+    function uploadImage() {
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('image', file);
+        if (!file) {
+                alert('Please select a file to upload.');
+                return;
+            }
+
+            // Validate file type
+            const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+            if (!validTypes.includes(file.type)) {
+                alert('Invalid file type. Please upload a PNG/JPEG/JPG image.');
+                return;
+            }
+
+        fetch('/upload_image', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            if (data) {
+              alert('Image uploaded successfully. ');
+              document.getElementById('classificationResult').textContent = 'Classification: ' + data.matches[0].name;
+
+              const uploadedImageElement = document.getElementById('uploadedImage');
+                    if (uploadedImageElement) {
+                        const imageURL = URL.createObjectURL(file); 
+                        uploadedImageElement.src = imageURL;
+                        uploadedImageElement.style.display = 'block'; 
+                    } else {
+                        console.error('Uploaded image element not found.');
+                    }
+                } 
+            else {
+                alert('Failed to upload image: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to upload image' + error);
+        });
+    }
+</script>
+{% endblock %}
