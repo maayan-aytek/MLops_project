@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Result{% endblock %}
+{% block content %}
+<h1>Result for Request ID: {{ request_id }}</h1>
+<div id="content">
+    <div id="image-container">
+        {% if current_image %}
+            <img id="resultImage" src="data:image/jpeg;base64,{{ current_image }}" alt="Result Image" style="max-width: 100%; height: auto;">
+        {% else %}
+            <p>No image available.</p>
+        {% endif %}
+    </div>
+    <div id="result-container">
+        <h3 style="margin-bottom: 0;">Classification:</h3>
+        {% if result.matches %}
+            <div style="display: inline;">
+                {% for match in result.matches %}
+                    <h3 style="margin-right: 10px;">{{ match.name }}</h3>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No matches found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

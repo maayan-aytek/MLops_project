@@ -150,7 +150,7 @@ def get_result_with_id(request_id) -> Response:
     future = current_app.config['process_dict'][request_id]
     if future.done():
         if future.exception() is not None:
-            return {}
+            return create_json_response({'error':'got an unhandle exception'}, 400)
         else:
             classification_result = future.result()
             if classification_result is not None:
@@ -163,4 +163,3 @@ def get_result_with_id(request_id) -> Response:
             return create_json_response(classification_result, 200)
     else:
         return create_json_response({'status': "running"}, 200)
-    

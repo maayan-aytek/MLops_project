@@ -7,17 +7,23 @@ from typing import Union, Optional
 import google.generativeai as genai
 from flask_login import login_required, current_user
 from flask import Blueprint, render_template, request, redirect, url_for, Response, current_app
+import requests 
+import json 
+import base64
+
+API_PORT = 8000  
+API_IP = "192.168.1.21"
+API_BASE_URL = f"http://{API_IP}:{API_PORT}/"
 
 
 # Load API key from secrets file
-with open('secrets.json', 'r') as file:
+with open('./shared/secrets.json', 'r') as file:
     secrets = json.load(file)
     API_KEY = secrets['API_KEY']
 
 # Configuring Gemini API 
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
-
 
 # Define Blueprint for views
 views = Blueprint('views', __name__)
@@ -62,43 +68,27 @@ def upload_image() -> Union[Response, str]:
     Returns:
         Response: A JSON response with the classification result or an error message.
     """
-    if request.method == 'POST': 
-        if 'image' in request.files:
-            image = request.files['image']
-            if '.' not in image.filename:
-                return create_json_response({'error': {'code': 400, 'message': "The filename invalid"}},400)
-            if image.filename.split('.')[0] == '':
-                return create_json_response({'error': {'code': 400, 'message': "The filename empty"}},400)
-            if image.filename.split('.')[1].lower() not in ['png', 'jpg', 'jpeg']: # Unsupported file
-                return create_json_response({'error': {'code': 400, 'message': "Support image in format ['png', 'jpg', 'jpeg']"}},400   )
-            image_path = os.path.join('uploads', image.filename)
-            image.save('uploads/' + image.filename)
-            classification_result = classify_image(image_path)
-            if classification_result is not None:
-                return create_json_response(classification_result, 200)
-            else:
-                return create_json_response({'error': {'code': 401, 'message': 'Classification failed'}}, 401)
+    if request.method == 'POST':
+        image = request.files['image']
+        image_filename = image.filename
+        method = request.form.get('method')
+        if method == "sync":
+            response = requests.post(API_BASE_URL + "upload_image", files={"image": (image_filename, image)})
         else:
-            return create_json_response({'error': {'code': 400, 'message': 'No image found in request'}}, 400)
+            response = requests.post(API_BASE_URL + "async_upload", files={"image": (image_filename, image)})
+            if 'request_id' in response.json():
+                result = response.json()
+                request_id = result['request_id']
+                image.seek(0)  # Make sure to seek to the start if previously read
+                image_data = image.read()
+                base64_image = base64.b64encode(image_data).decode('utf-8')
+                current_app.config['image_dict'][str(request_id)] = base64_image
+
+        result = response.json()
+
+        return create_json_response(result, response.status_code)
     return render_template("index.html", user=current_user)
 
-
-def classify_image(image_path: str) -> Optional[str]:
-    """
-    Classify an uploaded image.
-    This function uses the Gemini API to classify the main object in an image.
-    Args:
-        image_path (str): The path to the image file.
-    Returns:
-        Optional[str]: The classification result, or None if classification fails.
-    """
-    img = PIL.Image.open(image_path)
-    response = model.generate_content(["What is the main object in the photo? answer just in one word- the main object", img], stream=True)
-    response.resolve()
-    classification = response.text
-    if classification:
-        return {'matches': [{'name': classification, 'score': 0.9}]}
-    return None
 
 
 @views.route('/result/<request_id>', methods=['GET'])
@@ -112,4 +102,10 @@ def get_result_with_id(request_id) -> Response:
     Returns:
         Response: A JSON response 
     """
-    return create_json_response({'error': {'code': 404, 'message': 'ID not found'}}, 404)
+    from werkzeug.datastructures import FileStorage
+
+    response = requests.get(API_BASE_URL + f"result/{request_id}")
+    result = response.json()
+    image_storage = current_app.config['image_dict'][str(request_id)]
+
+    return render_template('result.html', request_id=request_id, result=result, current_image=image_storage)

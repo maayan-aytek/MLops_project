@@ -2,6 +2,14 @@
 {% block title %}Index{% endblock %}
 {% block content %}
 <h1>Upload Image</h1>
+<br>
+<label for="uploadMethod">Choose upload method:</label>
+<select id="uploadMethod">
+    <option value="sync">Synchronous</option>
+    <option value="async">Asynchronous</option>
+</select>
+<p></p>
+<br>
 <input type="file" id="fileInput">
 <button onclick="uploadImage()">Upload</button>
 <p></p>
@@ -10,21 +18,32 @@
 
 <script>
     function uploadImage() {
+        // Clear previous results
+        document.getElementById('classificationResult').textContent = '';
+        const uploadedImageElement = document.getElementById('uploadedImage');
+        if (uploadedImageElement) {
+            uploadedImageElement.src = '';
+            uploadedImageElement.style.display = 'none';
+        }
+
         const fileInput = document.getElementById('fileInput');
+        const method = document.getElementById('uploadMethod').value;
         const file = fileInput.files[0];
         const formData = new FormData();
         formData.append('image', file);
+        formData.append('method', method);
+        
         if (!file) {
-                alert('Please select a file to upload.');
-                return;
-            }
+            alert('Please select a file to upload.');
+            return;
+        }
 
-            // Validate file type
-            const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
-            if (!validTypes.includes(file.type)) {
-                alert('Invalid file type. Please upload a PNG/JPEG/JPG image.');
-                return;
-            }
+        // Validate file type
+        const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+        if (!validTypes.includes(file.type)) {
+            alert('Invalid file type. Please upload a PNG/JPEG/JPG image.');
+            return;
+        }
 
         fetch('/upload_image', {
             method: 'POST',
@@ -34,10 +53,10 @@
         .then(data => {
             console.log(data);
             if (data) {
-              alert('Image uploaded successfully. ');
-              document.getElementById('classificationResult').textContent = 'Classification: ' + data.matches[0].name;
+                alert('Image uploaded successfully.');
+                if (method === 'sync') {
+                    document.getElementById('classificationResult').textContent = 'Classification: ' + data.matches[0].name;
 
-              const uploadedImageElement = document.getElementById('uploadedImage');
                     if (uploadedImageElement) {
                         const imageURL = URL.createObjectURL(file); 
                         uploadedImageElement.src = imageURL;
@@ -45,14 +64,16 @@
                     } else {
                         console.error('Uploaded image element not found.');
                     }
-                } 
-            else {
+                } else {
+                    document.getElementById('classificationResult').textContent = 'Request ID: ' + data.request_id;
+                }
+            } else {
                 alert('Failed to upload image: ' + data.error);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Failed to upload image' + error);
+            alert('Failed to upload image: ' + error);
         });
     }
 </script>
