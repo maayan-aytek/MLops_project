@@ -1,4 +1,5 @@
 import os 
+from io import BytesIO
 import json
 import time
 import PIL.Image
@@ -55,16 +56,21 @@ def home() -> Response:
 
 @views.route('/status', methods=['GET'])
 def status():
+    running = 0
+    for process in current_app.config['process_dict'].values():
+        if not process.done():
+            running += 1
+
     data = {
         'uptime': time.time() - current_app.config['START_TIME'],
         'processed': {
             'success': current_app.config['SUCCESS'],
             'fail': current_app.config['FAIL'],     
-            'running': 0,
+            'running': running,
             'queued': 0   
         },
         'health': 'ok',
-        'api_version': 0.21,
+        'api_version': 0.3,
     }
     return create_json_response({'status': data}, 200)
 
@@ -97,23 +103,10 @@ def upload_image() -> Union[Response, str]:
             return create_json_response({'error': {'code': 400, 'message': 'No image found in request'}}, 400)
         
 
-def execute_async_upload_image(request_files):
-    if 'image' in request_files:
-        image = request_files['image']
-        if '.' not in image.filename:
-            return create_json_response({'error': {'code': 400, 'message': "The filename invalid"}},400)
-        if image.filename.split('.')[0] == '':
-            return create_json_response({'error': {'code': 400, 'message': "The filename empty"}},400)
-        if image.filename.split('.')[1].lower() not in ['png', 'jpg', 'jpeg']: # Unsupported file
-            return create_json_response({'error': {'code': 400, 'message': "Support image in format ['png', 'jpg', 'jpeg']"}}, 400)
-        classification_result = classify_image(PIL.Image.open(image))
-        if classification_result is not None:
-            return create_json_response(classification_result, 200)
-        else:
-            return create_json_response({'error': {'code': 401, 'message': 'Classification failed'}}, 401)
-    else:
-        return create_json_response({'error': {'code': 400, 'message': 'No image found in request'}}, 400)
-
+def execute_async_upload_image(image_data):
+    image = PIL.Image.open(BytesIO(image_data))
+    classification_result = classify_image(image)
+    return classification_result
 
 @views.route('/async_upload', methods=['POST'])
 def async_upload() -> Union[Response, str]:
@@ -125,16 +118,20 @@ def async_upload() -> Union[Response, str]:
     Returns:
         Response: A JSON response with the classification result or an error message.
     """
-    if request.method == 'POST': 
-        request_id = random.randint(10000, 1000000)
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            future = executor.submit(execute_async_upload_image, request.files)
-            print("here")
-            current_app.config['process_dict'][str(request_id)] = future
-            time.sleep(1)
-            print(current_app.config['process_dict'])
-            print("here2")
-        return create_json_response({'request_id': request_id}, 202)
+    if 'image' not in request.files:
+        return create_json_response({'error': {'code': 400, 'message': 'No image found in request'}}, 400)
+    
+    image = request.files['image']
+    if '.' not in image.filename or image.filename.split('.')[1].lower() not in ['png', 'jpg', 'jpeg']:
+        return create_json_response({'error': {'code': 400, 'message': "Support image in format ['png', 'jpg', 'jpeg']"}}, 400)
+    image_data = image.read() 
+
+    request_id = random.randint(10000, 1000000)
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future = executor.submit(execute_async_upload_image, image_data)
+        current_app.config['process_dict'][str(request_id)] = future
+        time.sleep(1)
+    return create_json_response({'request_id': request_id}, 202)
 
 
 
@@ -148,21 +145,22 @@ def get_result_with_id(request_id) -> Response:
     Returns:
         Response: A JSON response 
     """
-    print(current_app.config['process_dict'])
     if request_id not in current_app.config['process_dict']:
         return create_json_response({'error': {'code': 404, 'message': 'ID not found'}}, 404)
     future = current_app.config['process_dict'][request_id]
     if future.done():
         if future.exception() is not None:
-            print("------")
-            print(future.exception())
             return {}
         else:
             classification_result = future.result()
-            if classification_result['status_code'] == 200:
-                return create_json_response({'status': "completed"}.update(classification_result), 200)
+            if classification_result is not None:
+                create_json_response(classification_result, 200)
+                classification_result.update({'status': "completed"})
             else:
-                return create_json_response({'status': "failed"}.update(classification_result), 200)
+                classification_result = {'error': {'code': 401, 'message': 'Classification failed'}}
+                create_json_response(classification_result, 401)
+                classification_result.update({'status': "failed"})
+            return create_json_response(classification_result, 200)
     else:
         return create_json_response({'status': "running"}, 200)
     
