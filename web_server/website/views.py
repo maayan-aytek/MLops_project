@@ -2,7 +2,9 @@ import os
 import json
 import time
 import PIL.Image
-from utils import *
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from shared.utils import *
 from typing import Union, Optional
 import google.generativeai as genai
 from flask_login import login_required, current_user

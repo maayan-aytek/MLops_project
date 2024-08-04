@@ -1,8 +1,5 @@
-import textwrap
-import time
 from flask import jsonify, Response, current_app
 from typing import List, Dict, Union
-from IPython.display import Markdown
 
 
 def create_json_response(data: Union[List, Dict], status_code: int) -> Response:
@@ -30,19 +27,3 @@ def create_json_response(data: Union[List, Dict], status_code: int) -> Response:
     response.headers['Content-Type'] = 'application/json'
     return response
 
-
-def to_markdown(text: str) -> Markdown:
-  """
-    Converts text to Markdown format.
-    
-    This function replaces bullet points with Markdown-compatible asterisks and
-    adds block quote formatting.
-
-    Args:
-        text (str): The text to be converted to Markdown.
-
-    Returns:
-        Markdown: The formatted Markdown text.
-    """
-  text = text.replace('•', '  *')
-  return Markdown(textwrap.indent(text, '> ', predicate=lambda _: True))

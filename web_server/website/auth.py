@@ -1,7 +1,10 @@
 from .models import User
 from .database import db
 from typing import Union, Optional
-from utils import create_json_response
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from shared.utils import create_json_response
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, login_required, logout_user, current_user
 from flask import Blueprint, render_template, request, flash, redirect, url_for, Response

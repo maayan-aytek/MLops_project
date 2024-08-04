@@ -5,7 +5,9 @@ from .models import User
 from .views import views
 from typing import Dict, Any
 from .database import db, init_db
-from utils import create_json_response
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from shared.utils import create_json_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
 from flask import Flask, request, flash, redirect, url_for
@@ -26,6 +28,7 @@ def create_app() -> Flask:
     app.config['SUCCESS'] = 0
     app.config['FAIL'] = 0
     app.config['START_TIME'] = time.time()
+    app.config['image_dict'] = {}
     DATABASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), DB_NAME)
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DATABASE_PATH}'
     init_db(app)
