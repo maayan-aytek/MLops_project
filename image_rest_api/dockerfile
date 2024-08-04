@@ -2,20 +2,18 @@
 FROM python:3.9-slim
 
 # Set the working directory inside the container
-WORKDIR /app
+WORKDIR /image_rest_api
 
 # Copy the requirements file and install dependencies
 COPY ../requirements.txt .
 RUN pip install -r requirements.txt
 
 # Copy the application code
-COPY . .
+COPY ./image_rest_api/ .
+COPY ./shared ./shared
 
 # Expose the port Flask will run on
-EXPOSE 8000
+EXPOSE 5000
 
 # Command to run the application
-CMD ["gunicorn", "-b", "0.0.0.0:8000", "main:app"]
-
-# Specify the default command to run the application using Gunicorn
-# CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "main:app"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "main:app"]
