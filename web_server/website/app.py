@@ -7,10 +7,12 @@ from typing import Dict, Any
 from .database import db, init_db
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from shared.utils import create_json_response
+from shared.utils import create_json_response, socketio
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, current_user
 from flask import Flask, request, flash, redirect, url_for
+from flask_socketio import SocketIO, join_room, leave_room, send
+
 
 
 DB_NAME = "database.db"
@@ -32,6 +34,8 @@ def create_app() -> Flask:
     DATABASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), DB_NAME)
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DATABASE_PATH}'
     init_db(app)
+
+    socketio.init_app(app)  # Initialize with the app
 
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
@@ -70,4 +74,4 @@ def create_app() -> Flask:
             Any: A JSON response 
         """
         return create_json_response({'error': {'code': 401, 'message': 'You unatuhorized access that page, please log in.'}},401)
-    return app
+    return app, socketio
