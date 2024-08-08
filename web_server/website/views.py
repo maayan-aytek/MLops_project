@@ -22,6 +22,9 @@ API_BASE_URL = f"http://{API_IP}:{API_PORT}/"
 with open('./shared/secrets.json', 'r') as file:
     secrets = json.load(file)
     API_KEY = secrets['API_KEY']
+    IP = secrets['IP']
+    API_PORT = secrets['API_PORT']
+    API_BASE_URL = f"http://{IP}:{API_PORT}/"
 
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')

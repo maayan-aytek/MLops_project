@@ -1,7 +1,6 @@
 version: "3.8"  # Specifies the version of Docker Compose
 
 services:
-
   mongodb007:
     image: mongo:latest  # Uses the official MongoDB image from Docker Hub
     container_name: mongodb
@@ -17,10 +16,8 @@ services:
     restart: unless-stopped
     ports:
       - 8081:8081  # Maps port 8081 on the host to port 8081 on the container
-    enviroment: 
-      ME_CONFIG_MONGODB_URL: mongodb://mongodb007
+    environment: 
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb007:27017  # Update URL to use the correct service name
 
-# to Sabag
-# Open docker desktop on your computer
-# activate by writing docker-compose -f docker-compose-mongo.yml up in the vsterminal
-# you can see the db in this url: http://localhost:80810
+volumes:
+  mongodb:  # Defines the named volume 'mongodb'
