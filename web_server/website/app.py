@@ -1,23 +1,21 @@
 import os
-import time
-from .auth import auth
-from .models import User
-from .views import views
-from typing import Dict, Any
-from .database import db, init_db
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from shared.utils import create_json_response, socketio
-from flask_sqlalchemy import SQLAlchemy
+import time
+from flask import Flask
+from typing import Dict, Any
+from flask_socketio import SocketIO
 from flask_login import LoginManager, current_user
-from flask import Flask, request, flash, redirect, url_for
-from flask_socketio import SocketIO, join_room, leave_room, send
-
-
+socketio = SocketIO()
 
 DB_NAME = "database.db"
-
 def create_app() -> Flask:
+    from .auth import auth
+    from .views import views
+    from .models import User
+    from .database import init_db
+    from shared.utils import create_json_response
+
     """
     Create and configure the Flask application.
     This function sets up the Flask app with necessary configurations, 
@@ -31,11 +29,12 @@ def create_app() -> Flask:
     app.config['FAIL'] = 0
     app.config['START_TIME'] = time.time()
     app.config['image_dict'] = {}
+
     DATABASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), DB_NAME)
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DATABASE_PATH}'
     init_db(app)
-
-    socketio.init_app(app)  # Initialize with the app
+    
+    socketio.init_app(app)  
 
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
@@ -74,4 +73,4 @@ def create_app() -> Flask:
             Any: A JSON response 
         """
         return create_json_response({'error': {'code': 401, 'message': 'You unatuhorized access that page, please log in.'}},401)
-    return app, socketio
+    return app

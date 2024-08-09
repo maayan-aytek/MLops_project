@@ -20,8 +20,6 @@
 <input type="text" id="message" placeholder="Type a message..." style="width: 80%;">
 <button onclick="sendMessage()">Send</button>
 
-<h3 id="debug"></h3>
-
 <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
 <script type="text/javascript">
     var socket = io();
@@ -75,7 +73,6 @@
         }
         socket.emit('message', { message: message, room: room });
         document.getElementById('message').value = '';
-        document.getElementById('debug').textContent = message;
     }
 
     // Handle incoming messages

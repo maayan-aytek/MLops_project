@@ -1,19 +1,18 @@
 import os
-import json
-import time
-import PIL.Image
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+import json
+import time
+import base64
+import requests
+import PIL.Image
+from typing import Union
 from shared.utils import *
-from typing import Union, Optional
+from .app import socketio
 import google.generativeai as genai
 from flask_login import login_required, current_user
-from flask import Blueprint, render_template, request, redirect, url_for, Response, current_app
 from flask_socketio import emit, join_room, leave_room, send
-import requests
-import json
-import base64
-
+from flask import Blueprint, render_template, request, redirect, url_for, Response, current_app
 
 API_PORT = 8000  
 API_IP = "192.168.1.21"
@@ -28,7 +27,6 @@ with open('./shared/secrets.json', 'r') as file:
 
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash')
-
 views = Blueprint('views', __name__)
 
 @views.route('/', methods=['GET'])
@@ -94,6 +92,7 @@ def handle_create_room(data):
     print(room)
     # Emit the room_created event with broadcast=True
     emit('room_created', {'room': room}, broadcast=True)
+    handle_join(data)
 
 @socketio.on('join')
 def handle_join(data):

@@ -1,8 +1,5 @@
-from flask import jsonify, Response, current_app
 from typing import List, Dict, Union
-
-from flask_socketio import SocketIO
-socketio = SocketIO()
+from flask import jsonify, Response, current_app
 
 def create_json_response(data: Union[List, Dict], status_code: int) -> Response:
     """
