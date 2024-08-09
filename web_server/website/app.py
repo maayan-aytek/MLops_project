@@ -4,11 +4,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 import time
 from flask import Flask
 from typing import Dict, Any
+from flask_pymongo import PyMongo
+from pymongo import MongoClient
 from flask_socketio import SocketIO
 from flask_login import LoginManager, current_user
 socketio = SocketIO()
 
-DB_NAME = "database.db"
 def create_app() -> Flask:
     from .auth import auth
     from .views import views
@@ -24,15 +25,16 @@ def create_app() -> Flask:
         Flask: The configured Flask application instance.
     """
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = 'secret key'
+    app.config['SECRET_KEY'] = 'super-secret'
     app.config['SUCCESS'] = 0
     app.config['FAIL'] = 0
     app.config['START_TIME'] = time.time()
     app.config['image_dict'] = {}
-
-    DATABASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), DB_NAME)
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DATABASE_PATH}'
-    init_db(app)
+    client = MongoClient('mongodb://10.0.0.5:27017/')
+    db = client['customtales']
+    users_collection = db['users']
+    app.config['MONGO_CLIENT'] = client
+    app.config['MONGO_DB'] = users_collection
     
     socketio.init_app(app)  
 
@@ -53,15 +55,11 @@ def create_app() -> Flask:
         return dict(user=current_user)
 
     @login_manager.user_loader
-    def load_user(id: int) -> User:
-        """
-        Load a user by their ID.
-        Args:
-            id (int): The user's ID.
-        Returns:
-            User: The user instance corresponding to the provided ID.
-        """
-        return User.query.get(int(id))
+    def load_user(username):
+        u = users_collection.find_one({"username": username})
+        if not u:
+            return None
+        return User(u)
 
     @login_manager.unauthorized_handler
     def unauthorized_callback() -> Any:

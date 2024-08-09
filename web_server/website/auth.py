@@ -1,5 +1,4 @@
 from .models import User
-from .database import db
 from typing import Union, Optional
 import sys
 import os
@@ -7,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 from shared.utils import create_json_response
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, login_required, logout_user, current_user
-from flask import Blueprint, render_template, request, flash, redirect, url_for, Response
+from flask import Blueprint, render_template, request, flash, redirect, url_for, Response, current_app
 
 auth = Blueprint('auth', __name__)
 
@@ -25,25 +24,21 @@ def login() -> Union[Response, str]:
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-
         # check if the user already login
         if current_user.is_authenticated:
             flash('The user already logged in.')
             return create_json_response({'error': {'code': 401, 'message': 'The user already login.'}}, 401)
 
-        user = User.query.filter_by(username=username).first()
-        if user:
-            if check_password_hash(user.password, password):
-                flash('Logged in successfully!', category='success')
-                login_user(user, remember=True)
-                return redirect(url_for('views.upload_image'))
-            else:
-                flash('Incorrect password, try again.', category='error')
-                return create_json_response({'error': {'code': 401, 'message': 'Incorrect password.'}}, 401)
+        db = current_app.config['MONGO_DB']
+        user = db.find_one({"username": username})
+        if user and check_password_hash(user['password'], password):
+            flash('Logged in successfully!', category='success')
+            login_user(User(user), remember=True)
+            return redirect(url_for('views.upload_image'))
         else:
-            flash('Username does not exist.', category='error')
-            return create_json_response({'error': {'code': 401, 'message': 'Username does not exist.'}}, 401)
-
+            flash('Incorrect username or password.', category='error')
+            return create_json_response({'error': {'code': 401, 'message': 'Incorrect username or password.'}}, 401)
+        
     return render_template("login.html", user=current_user)
     
 
@@ -73,8 +68,8 @@ def sign_up() -> Union[Response, str]:
         password1 = request.form.get('password1')
         password2 = request.form.get('password2')
 
-        message = ''
-        user = User.query.filter_by(username=username).first()
+        db = current_app.config['MONGO_DB']
+        user = db.find_one({"username": username})
         if user:
             flash('Username already exists.', category='error')
             message = 'Username already exists.'
@@ -91,10 +86,13 @@ def sign_up() -> Union[Response, str]:
             flash('Password must be not empty.', category='error')
             message = 'Password must be not empty.'
         else:
-            new_user = User(username=username, first_name=first_name, password=generate_password_hash(password1, method='pbkdf2:sha256'))
-            db.session.add(new_user)
-            db.session.commit()
-            login_user(new_user, remember=True)
+            new_user = {
+                "username": username,
+                "first_name": first_name,
+                "password": generate_password_hash(password1, method='pbkdf2:sha256')
+            }
+            db.insert_one(new_user)
+            login_user(User(new_user), remember=True)
             flash('Account created!', category='success')
             return redirect(url_for('views.upload_image'))
 
