@@ -29,6 +29,7 @@ def create_app() -> Flask:
     app.config['FAIL'] = 0
     app.config['START_TIME'] = time.time()
     app.config['image_dict'] = {}
+    app.config['rooms'] = {}
 
     DATABASE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), DB_NAME)
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DATABASE_PATH}'
