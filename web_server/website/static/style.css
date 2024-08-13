@@ -1,0 +1,180 @@
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh; /* Ensure the body covers at least the full height of the viewport */
+    background-image: url('background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    font-family: 'Open Sans', sans-serif;
+    position: relative;
+}
+
+.navbar {
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    padding: 10px 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 0 0 10px 10px;
+}
+
+.nav-logo img {
+    width: 40px;
+    height: auto;
+    margin-right: 20px;
+    position: absolute;
+    left: 20px;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-links li {
+    margin-left: 30px;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.1em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    padding: 5px 10px;
+}
+
+.nav-links a:hover {
+    color: #ca4fff;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+}
+
+.container {
+    text-align: center;
+    margin-top: 120px; /* Adjusted margin for the container */
+    max-width: 800px;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.5); /* Add semi-transparent background to container */
+    border-radius: 10px;
+}
+
+.logo {
+    width: 150px;
+    height: auto;
+    margin: 30px auto; /* This centers the logo horizontally */
+    display: block;
+}
+
+h1, h2 {
+    font-size: 2em;
+    margin: 20px 0;
+    color: #fff;
+}
+
+p {
+    color: white;
+    line-height: 1.6;
+    text-align: justify; /* Centered and justified text */
+    margin: 0 auto;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 10px;
+    background-color: #fff;
+    color: #333;
+    border: none;
+    border-radius: 25px;
+    text-decoration: none;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+input[type="text"], input[type="password"], input[type="number"], select {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 15px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+/* Back button styling */
+.back-button {
+    display: inline-block;
+    padding: 10px 20px;
+    margin-top: 30px;
+    background-color: #fff;
+    color: #333;
+    border: none;
+    border-radius: 25px;
+    text-decoration: none;
+    font-size: 1.2em;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.back-button:hover {
+    background-color: #f1f1f1;
+}
+
+label {
+    color: white; /* Changes the label text color to white */
+    font-size: 1em; /* You can adjust the font size if needed */
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.action-btn img {
+    width: 150px;
+    height: 150px;
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+.action-btn img:hover {
+    transform: scale(1.1);
+}
+
+

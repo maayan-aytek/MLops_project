@@ -36,7 +36,7 @@ def login() -> Union[Response, str]:
             if check_password_hash(user.password, password):
                 flash('Logged in successfully!', category='success')
                 login_user(user, remember=True)
-                return redirect(url_for('views.upload_image'))
+                return redirect(url_for('views.choose_action'))
             else:
                 flash('Incorrect password, try again.', category='error')
                 return create_json_response({'error': {'code': 401, 'message': 'Incorrect password.'}}, 401)

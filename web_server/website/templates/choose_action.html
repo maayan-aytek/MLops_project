@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CustomTales</title>
+    <title>Choose Action - CustomTales</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -20,18 +20,19 @@
             {% else %}
                 <li><a href="{{ url_for('auth.login') }}">Login</a></li>
             {% endif %}
-        </ul>   
+        </ul>
     </nav>
-    {% block content %}
-    {% endblock %}
     <div class="container">
         <img src="{{ url_for('static', filename='logo.png') }}" alt="CustomTales Logo" class="logo">
-        <h1>Welcome to CustomTales!</h1>
-        <a href="{{ url_for('views.about_us') }}" class="btn">About Us</a>
-        <br>
-        <a href="{{ url_for('auth.login') }}" class="btn">Login</a>
-        <br>
-        <a href="{{ url_for('auth.sign_up') }}" class="btn">Sign Up</a>
+        <h1>What would you like to do?</h1>
+        <div class="action-buttons">
+            <a href="{{ url_for('views.upload_image') }}" class="action-btn">
+                <img src="{{ url_for('static', filename='upload_image.png') }}" alt="Upload Image">
+            </a>
+            <a href="{{ url_for('views.handle_room_request') }}" class="action-btn">
+                <img src="{{ url_for('static', filename='create_room_story.png') }}" alt="Create Room for Story">
+            </a>
+        </div>
     </div>
 </body>
 </html>

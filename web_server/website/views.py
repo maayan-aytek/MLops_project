@@ -42,8 +42,8 @@ views = Blueprint('views', __name__)
 @views.route('/', methods=['GET'])
 def home() -> Response:
     if current_user.is_authenticated:
-        return redirect(url_for('views.upload_image'))
-    return redirect(url_for('auth.login'))
+        return redirect(url_for('views.choose_action'))
+    return redirect(url_for('views.home_view'))
 
 @views.route('/status', methods=['GET'])
 def status():
@@ -93,6 +93,18 @@ def get_result_with_id(request_id) -> Response:
     return render_template('result.html', request_id=request_id, result=result, current_image=image_storage)
 
 
+@views.route('/home', methods=['GET'])
+def home_view():
+    return render_template('base.html', user=current_user)
+
+@views.route('/about_us', methods=['GET'])
+def about_us():
+    return render_template('about_us.html', user=current_user)
+
+@views.route('/choose_action', methods=['GET'])
+def choose_action():
+    return render_template('choose_action.html', user=current_user)
+
 def generate_unique_code(length, rooms):
     while True:
         code = ""
@@ -103,7 +115,6 @@ def generate_unique_code(length, rooms):
             break
     
     return code
-
 
 
 @views.route('/handle_room_request', methods=["POST", "GET"])
