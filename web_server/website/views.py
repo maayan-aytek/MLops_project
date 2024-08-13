@@ -20,6 +20,14 @@ API_PORT = 8000
 API_IP = "192.168.1.21"
 API_BASE_URL = f"http://{API_IP}:{API_PORT}/"
 
+questions = [
+    "Moral of the story",
+    "Main charcter name",
+    "Secondery charcter name",
+    "Story mode",
+    "Story inspiration"
+]
+
 with open('./shared/secrets.json', 'r') as file:
     secrets = json.load(file)
     API_KEY = secrets['API_KEY']
@@ -96,15 +104,7 @@ def generate_unique_code(length, rooms):
     
     return code
 
-# Example room structure
-# rooms = {
-#     "room1": {
-#         "messages": [],
-#         "questions": ["Question 1", "Question 2", "Question 3"],
-#         "answers": {},
-#         "current_turn": 0,
-#     }
-# }
+
 
 @views.route('/handle_room_request', methods=["POST", "GET"])
 def handle_room_request():
@@ -124,7 +124,14 @@ def handle_room_request():
 
             # Create a new room with a unique code
             room = generate_unique_code(4, rooms)
-            rooms[room] = {"members": 1, "max_participants": int(num_participants), "messages": [], "participants": [name]}
+            rooms[room] = {
+                "num_members": 1,
+                "turn_number": 0,
+                "max_participants": int(num_participants),
+                "messages": [],
+                "participants": [name],
+                "answers": {}
+            }
             session["room"] = room
             session["name"] = name
         
@@ -137,10 +144,10 @@ def handle_room_request():
             if code not in rooms:
                 return render_template("handle_room_request.html", error="Room does not exist.", name=name, code=code)
             
-            if rooms[code]['members'] > rooms[code]['max_participants']:
+            if rooms[code]['num_members'] >= rooms[code]['max_participants']:
                 return render_template("handle_room_request.html", error="The room is already full, please create a new room.", name=name, code=code)
             
-            rooms[code]['members'] += 1
+            rooms[code]['num_members'] += 1
             rooms[code]['participants'].append(name)
             session["room"] = code
             session["name"] = name
@@ -158,34 +165,7 @@ def lobby():
     if room is None or session.get("name") is None or room not in rooms:
         return redirect(url_for("views.handle_room_request"))
 
-    return render_template("lobby.html", code=room, participants=rooms[room]["participants"], is_full=rooms[room]["members"] >= rooms[room]["max_participants"])
-
-
-@views.route("/room")
-def room():
-    rooms = current_app.config['rooms']
-    room = session.get("room")
-
-    if room is None or session.get("name") is None or room not in rooms:
-        return redirect(url_for("views.handle_room_request"))
-
-    return render_template("room.html", code=room, messages=rooms[room]["messages"])
-
-
-@socketio.on("message")
-def message(data):
-    rooms = current_app.config['rooms']
-    room = session.get("room")
-    if room not in rooms:
-        return 
-    
-    content = {
-        "name": session.get("name"),
-        "message": data["data"]
-    }
-    send(content, to=room)
-    rooms[room]["messages"].append(content)
-    print(f"{session.get('name')} said: {data['data']}")
+    return render_template("lobby.html", code=room, participants=rooms[room]["participants"], is_full=rooms[room]["num_members"] >= rooms[room]["max_participants"])
 
 @socketio.on("connect_lobby")
 def connect_lobby():
@@ -195,7 +175,7 @@ def connect_lobby():
         return
     
     participants = current_app.config['rooms'][room]['participants']
-    is_full = current_app.config['rooms'][room]['members'] >= current_app.config['rooms'][room]['max_participants']
+    is_full = current_app.config['rooms'][room]['num_members'] >= current_app.config['rooms'][room]['max_participants']
     
     # Emit updated participants list and full status to the room
     emit('update_participants', {'participants': participants, 'is_full': is_full}, room=room)
@@ -205,17 +185,103 @@ def connect_lobby():
     send({"name": name, "message": "has joined the room"}, to=room)
 
 
+@views.route("/room")
+def room():
+    rooms = current_app.config['rooms']
+    room_code = session.get("room")
+    if room_code is None or room_code not in rooms:
+        return redirect(url_for("handle_room_request"))
+
+    # define participants order done
+    if "participants_order" not in rooms[room_code]:
+        rooms[room_code]["participants_order"] = random.sample(rooms[room_code]["participants"], len(rooms[room_code]["participants"]))
+
+    return render_template("room.html", code=room_code, messages=rooms[room_code]["messages"])
+
+
+@socketio.on("join")
+def handle_join(data):
+    rooms = current_app.config['rooms']
+    room_code = session.get("room")
+
+    if room_code and room_code in rooms:
+        emit("finish_turn", {"room_code":room_code}, room=room_code)
+
+
+@socketio.on("message")
+def handle_message(data):
+    rooms = current_app.config['rooms']
+    room_code = session.get("room")
+    if room_code and room_code in rooms:
+        rooms[room_code]["messages"].append(data)
+
+        emit("message", data, room=room_code)
+
+
+@socketio.on("answer")
+def handle_answer(data):
+    rooms = current_app.config['rooms']
+    room_code = session.get("room")
+    name = session.get('name')
+    
+    if room_code and room_code in rooms:
+        current_turn = rooms[room_code]["turn_number"]
+        participants_order = rooms[room_code]["participants_order"]
+        n_members = rooms[room_code]["num_members"]
+        
+        current_participant = participants_order[current_turn % n_members]
+
+        if name == current_participant:
+            question = data["question"]
+            answer = data["answer"]
+            rooms[room_code]["answers"][question] = answer
+
+            # update next turn
+            rooms[room_code]['turn_number'] += 1
+            emit("finish_turn", {"room_code":room_code}, room=room_code)
+        else:
+            emit("unauthorized", {"message": "It's not your turn to answer."}, room=room_code)
+
+
+
+@socketio.on("next_turn")
+def handle_next_turn(room_code=None):
+    rooms = current_app.config['rooms']
+    room_code = room_code.get("room_code")
+    name = session.get('name')
+    print("room_code", room_code)
+    if not room_code:
+        room_code = session.get("room")
+    
+    if room_code and room_code in rooms:
+
+        current_turn = rooms[room_code]['turn_number']
+        participants_order = rooms[room_code]["participants_order"]
+        n_members = rooms[room_code]["num_members"]
+        
+        if current_turn<len(questions):
+            current_question = questions[current_turn]
+            current_participant = participants_order[current_turn % n_members]
+
+        print(current_participant, name, current_turn, current_participant==name)
+        emit("question", {
+            "question": current_question,
+            "is_participant_turn": current_participant == name
+        }, room=request.sid)
+
+
 @socketio.on("connect")
 def connect(auth):
     rooms = current_app.config['rooms']
     room = session.get("room")
-    name = session.get("name")
+    name = session.get('name')
+
     if not room or not name:
         return
     if room not in rooms:
         leave_room(room)
         return
-    
+
     join_room(room)
     send({"name": name, "message": "has entered the room"}, to=room)
     print(f"{name} joined room {room}")
@@ -230,8 +296,8 @@ def disconnect():
     # leave_room(room)
 
     # if room in rooms:
-    #     rooms[room]["members"] -= 1
-    #     if rooms[room]["members"] <= 0:
+    #     rooms[room]["num_members"] -= 1
+    #     if rooms[room]["num_members"] <= 0:
     #         del rooms[room]
     
     # send({"name": name, "message": "has left the room"}, to=room)

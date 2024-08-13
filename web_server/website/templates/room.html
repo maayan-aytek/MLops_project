@@ -1,56 +1,64 @@
-{% extends 'base.html' %} {% block content %}
-<div class="message-box">
-  <h2>Chat Room: {{code}}</h2>
-  <div class="messages" id="messages"></div>
-  <div class="inputs">
-    <input
-      type="text"
-      rows="3"
-      placeholder="Message"
-      name="message"
-      id="message"
-    />
-    <button type="button" name="send" id="send-btn" onClick="sendMessage()">
-      Send
-    </button>
-  </div>
+{% extends 'base.html' %} 
+{% block content %}
+<div class="question-box">
+  <h2>Current Question</h2>
+  <div id="current-question" class="question"></div>
 </div>
+
+<div class="participant-box">
+  <h3>It's <span id="current-participant"></span>'s turn to answer.</h3>
+</div>
+
+<div class="answer-box">
+  <textarea id="answer" rows="4" placeholder="Type your answer here..." disabled></textarea>
+  <button id="submit-btn" onClick="sendAnswer()" disabled>Submit Answer</button>
+</div>
+
+<div id="message-box" style="color: red;"></div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
         integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
         crossorigin="anonymous">
 </script>
 <script type="text/javascript">
   var socketio = io();
-  
-  const messages = document.getElementById("messages");
 
-  const createMessage = (name, msg) => {
-    const content = `
-    <div class="text">
-        <span>
-            <strong>${name}</strong>: ${msg}
-        </span>
-        <span class="muted">
-            ${new Date().toLocaleString()}
-        </span>
-    </div>
-    `;
-    messages.innerHTML += content;
-  };
+  const currentQuestion = document.getElementById("current-question");
+  const currentParticipant = document.getElementById("current-participant");
+  const answerInput = document.getElementById("answer");
+  const submitButton = document.getElementById("submit-btn");
+  const messageBox = document.getElementById("message-box");
 
-  socketio.on("message", (data) => {
-    createMessage(data.name, data.message);
+  socketio.on("question", (data) => {
+    currentQuestion.innerText = data.question;
+    currentParticipant.innerText = data.is_participant_turn ? "your" : "another participant's";
+
+    if (data.is_participant_turn) {
+      answerInput.disabled = false;
+      submitButton.disabled = false;
+    } else {
+      answerInput.disabled = true;
+      submitButton.disabled = true;
+    }
   });
 
-  const sendMessage = () => {
-    const message = document.getElementById("message");
-    if (message.value == "") return;
-    socketio.emit("message", { data: message.value });
-    message.value = "";
+  socketio.on("finish_turn", (data) => {
+    socketio.emit("next_turn", {room_code: `${data.room_code}`});
+  });
+
+  socketio.on("unauthorized", (data) => {
+    messageBox.innerText = data.message;
+  });
+
+  const sendAnswer = () => {
+    const answer = answerInput.value;
+    const question = currentQuestion.innerText;
+    if (answer === "" || question === "") return;
+    socketio.emit("answer", { question: question, answer: answer });
+    answerInput.value = "";
   };
+
+  // Emit join event to receive the current question and participant
+  socketio.emit("join", {});
 </script>
-{% for msg in messages %}
-<script type="text/javascript">
-  createMessage("{{msg.name}}", "{{msg.message}}");
-</script>
-{% endfor %} {% endblock %}
+{% endblock %}
