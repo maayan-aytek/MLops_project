@@ -96,6 +96,16 @@ def generate_unique_code(length, rooms):
     
     return code
 
+# Example room structure
+# rooms = {
+#     "room1": {
+#         "messages": [],
+#         "questions": ["Question 1", "Question 2", "Question 3"],
+#         "answers": {},
+#         "current_turn": 0,
+#     }
+# }
+
 @views.route('/handle_room_request', methods=["POST", "GET"])
 def handle_room_request():
     session.clear()
@@ -114,13 +124,11 @@ def handle_room_request():
 
             # Create a new room with a unique code
             room = generate_unique_code(4, rooms)
-            rooms[room] = {"members": 1, "max_participants": int(num_participants), "messages": []}
-            print("1", rooms[room])
+            rooms[room] = {"members": 1, "max_participants": int(num_participants), "messages": [], "participants": [name]}
             session["room"] = room
             session["name"] = name
-            session["participants"] = num_participants
         
-            return redirect(url_for("views.room"))
+            return redirect(url_for("views.lobby"))
         
         elif action == "join":
             code = request.form.get("code")
@@ -129,17 +137,28 @@ def handle_room_request():
             if code not in rooms:
                 return render_template("handle_room_request.html", error="Room does not exist.", name=name, code=code)
             
-            rooms[code]['members'] += 1
             if rooms[code]['members'] > rooms[code]['max_participants']:
                 return render_template("handle_room_request.html", error="The room is already full, please create a new room.", name=name, code=code)
             
+            rooms[code]['members'] += 1
+            rooms[code]['participants'].append(name)
             session["room"] = code
             session["name"] = name
         
-            return redirect(url_for("views.room"))
+            return redirect(url_for("views.lobby"))
     
     return render_template("handle_room_request.html")
 
+
+@views.route("/lobby")
+def lobby():
+    rooms = current_app.config['rooms']
+    room = session.get("room")
+    print(rooms)
+    if room is None or session.get("name") is None or room not in rooms:
+        return redirect(url_for("views.handle_room_request"))
+
+    return render_template("lobby.html", code=room, participants=rooms[room]["participants"], is_full=rooms[room]["members"] >= rooms[room]["max_participants"])
 
 
 @views.route("/room")
@@ -151,6 +170,7 @@ def room():
         return redirect(url_for("views.handle_room_request"))
 
     return render_template("room.html", code=room, messages=rooms[room]["messages"])
+
 
 @socketio.on("message")
 def message(data):
@@ -167,6 +187,24 @@ def message(data):
     rooms[room]["messages"].append(content)
     print(f"{session.get('name')} said: {data['data']}")
 
+@socketio.on("connect_lobby")
+def connect_lobby():
+    room = session.get("room")
+    name = session.get("name")
+    if not room or room not in current_app.config['rooms']:
+        return
+    
+    participants = current_app.config['rooms'][room]['participants']
+    is_full = current_app.config['rooms'][room]['members'] >= current_app.config['rooms'][room]['max_participants']
+    
+    # Emit updated participants list and full status to the room
+    emit('update_participants', {'participants': participants, 'is_full': is_full}, room=room)
+    print(f"{name} joined room {room} lobby")
+    
+    # Notify other participants about the new member
+    send({"name": name, "message": "has joined the room"}, to=room)
+
+
 @socketio.on("connect")
 def connect(auth):
     rooms = current_app.config['rooms']
@@ -181,18 +219,20 @@ def connect(auth):
     join_room(room)
     send({"name": name, "message": "has entered the room"}, to=room)
     print(f"{name} joined room {room}")
+    return redirect(url_for("views.room"))
 
 @socketio.on("disconnect")
 def disconnect():
-    rooms = current_app.config['rooms']
-    room = session.get("room")
-    name = session.get("name")
-    leave_room(room)
+    pass
+    # rooms = current_app.config['rooms']
+    # room = session.get("room")
+    # name = session.get("name")
+    # leave_room(room)
 
-    if room in rooms:
-        rooms[room]["members"] -= 1
-        if rooms[room]["members"] <= 0:
-            del rooms[room]
+    # if room in rooms:
+    #     rooms[room]["members"] -= 1
+    #     if rooms[room]["members"] <= 0:
+    #         del rooms[room]
     
-    send({"name": name, "message": "has left the room"}, to=room)
-    print(f"{name} has left the room {room}")
+    # send({"name": name, "message": "has left the room"}, to=room)
+    # print(f"{name} has left the room {room}")
