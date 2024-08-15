@@ -69,11 +69,12 @@ def sign_up() -> Union[Response, str]:
     """
     if request.method == 'POST':
         username = request.form.get('username')
-        first_name = request.form.get('firstName')
+        first_name = request.form.get('name')
         password1 = request.form.get('password1')
         password2 = request.form.get('password2')
 
         message = ''
+        print(first_name, len(first_name))
         user = User.query.filter_by(username=username).first()
         if user:
             flash('Username already exists.', category='error')
@@ -96,7 +97,7 @@ def sign_up() -> Union[Response, str]:
             db.session.commit()
             login_user(new_user, remember=True)
             flash('Account created!', category='success')
-            return redirect(url_for('views.upload_image'))
+            return redirect(url_for('views.choose_action'))
 
         if message != '':
             return create_json_response({'error': {'code': 401, 'message': message}}, 401)

@@ -21,11 +21,16 @@
       div.textContent = participant;
       participantsList.appendChild(div);
     });
-    
-    // Redirect to the chat room if full
+
+    // Emit to connect to the room if it's full
     if (data.is_full) {
-      window.location.href = "{{ url_for('views.room') }}";
+      socket.emit('connect_room');
     }
+  });
+
+  // Listen for the redirect event and perform the redirection
+  socket.on('redirect_to_room', function(data) {
+    window.location.href = data.url;
   });
 
   // Notify server when user connects to the lobby

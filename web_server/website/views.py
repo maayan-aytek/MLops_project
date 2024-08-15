@@ -16,10 +16,6 @@ from flask_login import login_required, current_user
 from flask_socketio import emit, join_room, leave_room, send
 from flask import Blueprint, render_template, request, redirect, url_for, Response, current_app, session
 
-API_PORT = 8000  
-API_IP = "192.168.1.21"
-API_BASE_URL = f"http://{API_IP}:{API_PORT}/"
-
 questions = [
     "Moral of the story",
     "Main charcter name",
@@ -32,6 +28,7 @@ with open('./shared/secrets.json', 'r') as file:
     secrets = json.load(file)
     API_KEY = secrets['API_KEY']
     IP = secrets['IP']
+    IP = '127.0.0.1'
     API_PORT = secrets['API_PORT']
     API_BASE_URL = f"http://{IP}:{API_PORT}/"
 
@@ -141,7 +138,8 @@ def handle_room_request():
                 "max_participants": int(num_participants),
                 "messages": [],
                 "participants": [name],
-                "answers": {}
+                "answers": {},
+                "sid_list": []
             }
             session["room"] = room
             session["name"] = name
@@ -172,14 +170,16 @@ def handle_room_request():
 def lobby():
     rooms = current_app.config['rooms']
     room = session.get("room")
-    print(rooms)
+
     if room is None or session.get("name") is None or room not in rooms:
         return redirect(url_for("views.handle_room_request"))
+
 
     return render_template("lobby.html", code=room, participants=rooms[room]["participants"], is_full=rooms[room]["num_members"] >= rooms[room]["max_participants"])
 
 @socketio.on("connect_lobby")
 def connect_lobby():
+    rooms = current_app.config['rooms']
     room = session.get("room")
     name = session.get("name")
     if not room or room not in current_app.config['rooms']:
@@ -188,23 +188,26 @@ def connect_lobby():
     participants = current_app.config['rooms'][room]['participants']
     is_full = current_app.config['rooms'][room]['num_members'] >= current_app.config['rooms'][room]['max_participants']
     
+    # add sids
+    if request.sid not in rooms[room]['sid_list']:
+        rooms[room]['sid_list'].append(request.sid)
+
     # Emit updated participants list and full status to the room
-    emit('update_participants', {'participants': participants, 'is_full': is_full}, room=room)
-    print(f"{name} joined room {room} lobby")
-    
-    # Notify other participants about the new member
-    send({"name": name, "message": "has joined the room"}, to=room)
+    emit('update_participants', {'participants': participants, 'is_full': is_full}, room=rooms[room]['sid_list'])
 
 
 @views.route("/room")
 def room():
+    name = session.get('name')
     rooms = current_app.config['rooms']
     room_code = session.get("room")
+
     if room_code is None or room_code not in rooms:
         return redirect(url_for("handle_room_request"))
 
     # define participants order done
     if "participants_order" not in rooms[room_code]:
+        print(name, "create participants_order")
         rooms[room_code]["participants_order"] = random.sample(rooms[room_code]["participants"], len(rooms[room_code]["participants"]))
 
     return render_template("room.html", code=room_code, messages=rooms[room_code]["messages"])
@@ -214,9 +217,10 @@ def room():
 def handle_join(data):
     rooms = current_app.config['rooms']
     room_code = session.get("room")
-
+    
     if room_code and room_code in rooms:
-        emit("finish_turn", {"room_code":room_code}, room=room_code)
+        rooms[room_code]['sid_list'].append(request.sid)
+        emit("finish_turn", {"room_code":room_code}, room=request.sid)
 
 
 @socketio.on("message")
@@ -226,7 +230,7 @@ def handle_message(data):
     if room_code and room_code in rooms:
         rooms[room_code]["messages"].append(data)
 
-        emit("message", data, room=room_code)
+        emit("message", data, room=rooms[room_code]['sid_list'])
 
 
 @socketio.on("answer")
@@ -249,18 +253,18 @@ def handle_answer(data):
 
             # update next turn
             rooms[room_code]['turn_number'] += 1
-            emit("finish_turn", {"room_code":room_code}, room=room_code)
+            emit("finish_turn", {"room_code":room_code}, room=rooms[room_code]['sid_list'])
         else:
-            emit("unauthorized", {"message": "It's not your turn to answer."}, room=room_code)
+            emit("unauthorized", {"message": "It's not your turn to answer."}, room=rooms[room_code]['sid_list'])
 
 
 
 @socketio.on("next_turn")
-def handle_next_turn(room_code=None):
+def next_turn(room_code=None):
     rooms = current_app.config['rooms']
     room_code = room_code.get("room_code")
     name = session.get('name')
-    print("room_code", room_code)
+
     if not room_code:
         room_code = session.get("room")
     
@@ -274,15 +278,14 @@ def handle_next_turn(room_code=None):
             current_question = questions[current_turn]
             current_participant = participants_order[current_turn % n_members]
 
-        print(current_participant, name, current_turn, current_participant==name)
         emit("question", {
             "question": current_question,
             "is_participant_turn": current_participant == name
         }, room=request.sid)
 
 
-@socketio.on("connect")
-def connect(auth):
+@socketio.on("connect_room")
+def connect_room():
     rooms = current_app.config['rooms']
     room = session.get("room")
     name = session.get('name')
@@ -294,12 +297,31 @@ def connect(auth):
         return
 
     join_room(room)
-    send({"name": name, "message": "has entered the room"}, to=room)
-    print(f"{name} joined room {room}")
-    return redirect(url_for("views.room"))
+    emit("redirect_to_room", {"url": url_for("views.room")}, room=request.sid)
+
+@socketio.on("connect")
+def connect():
+    # print("disconnect", session.get("name"))
+    # name = session.get('name')
+    pass
+    # rooms = current_app.config['rooms']
+    # room = session.get("room")
+    # name = session.get('name')
+
+    # if not room or not name:
+    #     return
+    # if room not in rooms:
+    #     leave_room(room)
+    #     return
+
+    # join_room(room)
+    # # send({"name": name, "message": "has entered the room"}, room=room)
+    # print(f"{name} joined room {room}")
+    # return redirect(url_for("views.room"))
 
 @socketio.on("disconnect")
 def disconnect():
+    # print("disconnect", session.get("name"))
     pass
     # rooms = current_app.config['rooms']
     # room = session.get("room")

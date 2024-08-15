@@ -177,4 +177,7 @@ label {
     transform: scale(1.1);
 }
 
-
+.tab-container {
+    width: 100%;
+    margin-top: 80px; /* Adjust this value to move the container down */
+}
