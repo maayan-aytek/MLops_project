@@ -139,7 +139,8 @@ def handle_room_request():
                 "messages": [],
                 "participants": [name],
                 "answers": {},
-                "sid_list": []
+                "sid_list": [],
+                "usernames":[current_user.username]
             }
             session["room"] = room
             session["name"] = name
@@ -158,6 +159,7 @@ def handle_room_request():
             
             rooms[code]['num_members'] += 1
             rooms[code]['participants'].append(name)
+            rooms[code]['usernames'].append(current_user.username)
             session["room"] = code
             session["name"] = name
         
@@ -174,14 +176,13 @@ def lobby():
     if room is None or session.get("name") is None or room not in rooms:
         return redirect(url_for("views.handle_room_request"))
 
-
     return render_template("lobby.html", code=room, participants=rooms[room]["participants"], is_full=rooms[room]["num_members"] >= rooms[room]["max_participants"])
 
 @socketio.on("connect_lobby")
 def connect_lobby():
     rooms = current_app.config['rooms']
     room = session.get("room")
-    name = session.get("name")
+
     if not room or room not in current_app.config['rooms']:
         return
     
@@ -198,7 +199,6 @@ def connect_lobby():
 
 @views.route("/room")
 def room():
-    name = session.get('name')
     rooms = current_app.config['rooms']
     room_code = session.get("room")
 
@@ -261,13 +261,40 @@ def handle_answer(data):
                     "questions": [q for p, q in rooms[room_code]["answers"].keys() if p == participant],
                     "answers": [a for (p, q), a in rooms[room_code]["answers"].items() if p == participant]
                 }
-            
-            emit("update_participant_data", {"participants": participant_data}, room=rooms[room_code]['sid_list'])
-            emit("finish_turn", {"room_code": room_code}, room=rooms[room_code]['sid_list'])
+            is_last_turn = current_turn+1==len(questions)
+            if not is_last_turn:
+                emit("update_participant_data", {"participants": participant_data}, room=rooms[room_code]['sid_list'])
+            emit("finish_turn", {"room_code": room_code,
+                                 "is_last_turn": is_last_turn}, room=rooms[room_code]['sid_list'])
         else:
             emit("unauthorized", {"message": "It's not your turn to answer."}, room=rooms[room_code]['sid_list'])
 
+@socketio.on("generate_story")
+def generate_story(room_code=None):
+    rooms = current_app.config['rooms']
+    room_code = room_code.get("room_code")
+    name = session.get('name')
 
+    current_turn = rooms[room_code]['turn_number']
+    participants_order = rooms[room_code]["participants_order"]
+    n_members = rooms[room_code]["num_members"]
+    current_participant = participants_order[current_turn % n_members]
+
+    if current_participant == name:
+        answers = list(rooms[room_code]['answers'].values())
+        story_details = {
+                            "members":rooms[room_code]['usernames'],
+                            "moral_of_the_story": answers[0],
+                            "mode":answers[1],
+                            "main_character_name":answers[2],
+                            "secondary_character_name":answers[3],
+                            "story_inspiration":answers[4]
+                        }
+                        
+        response = requests.post(API_BASE_URL + "get_story", json={"story_details": story_details})
+        story_dict = response.json()
+
+        socketio.emit("story", {"story": story_dict["story"]}, room=rooms[room_code]['sid_list'])
 
 @socketio.on("next_turn")
 def next_turn(room_code=None):
@@ -283,10 +310,10 @@ def next_turn(room_code=None):
         current_turn = rooms[room_code]['turn_number']
         participants_order = rooms[room_code]["participants_order"]
         n_members = rooms[room_code]["num_members"]
-        
+        current_participant = participants_order[current_turn % n_members]
+
         if current_turn<len(questions):
             current_question = questions[current_turn]
-            current_participant = participants_order[current_turn % n_members]
 
             emit("question", {
                 "question": current_question,
@@ -309,6 +336,7 @@ def connect_room():
 
     join_room(room)
     emit("redirect_to_room", {"url": url_for("views.room")}, room=request.sid)
+
 
 @socketio.on("connect")
 def connect():

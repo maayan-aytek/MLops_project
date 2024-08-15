@@ -22,6 +22,10 @@
 
 <div id="message-box" style="color: red;"></div>
 
+<div id="generating-story-message" style="display: none;">
+  <h2>Generating the story...</h2>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
         integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
         crossorigin="anonymous">
@@ -36,8 +40,7 @@
   const submitButton = document.getElementById("submit-btn");
   const messageBox = document.getElementById("message-box");
   const participantsContainer = document.getElementById("participants-container");
-
-  const participantSections = {}; // Object to hold participant elements
+  const generatingStoryMessage = document.getElementById("generating-story-message");
 
   socketio.on("question", (data) => {
     currentQuestion.innerText = data.question;
@@ -53,7 +56,22 @@
   });
 
   socketio.on("finish_turn", (data) => {
-    socketio.emit("next_turn", { room_code: `${data.room_code}` });
+    if (data.is_last_turn) {
+        // Show "Generating the story..." message
+        generatingStoryMessage.style.display = 'block';
+
+        // Emit event to generate the story
+        socketio.emit("generate_story", { room_code: `${data.room_code}` });
+
+        // Hide all other elements
+        document.querySelector('.participant-sections').style.display = 'none';
+        document.querySelector('.question-box').style.display = 'none';
+        document.querySelector('.participant-box').style.display = 'none';
+        document.querySelector('.answer-box').style.display = 'none';
+    } else {
+        // Proceed to the next turn
+        socketio.emit("next_turn", { room_code: `${data.room_code}` });
+    }
   });
 
   socketio.on("unauthorized", (data) => {
@@ -105,6 +123,24 @@
     socketio.emit("answer", { room_code: roomCode, question: question, answer: answer });
     answerInput.value = "";
   };
+  
+  socketio.on("story", (data) => {
+    // Hide all elements
+    generatingStoryMessage.style.display = 'none';
+    document.querySelector('.participant-sections').style.display = 'none';
+    document.querySelector('.question-box').style.display = 'none';
+    document.querySelector('.participant-box').style.display = 'none';
+    document.querySelector('.answer-box').style.display = 'none';
+    messageBox.style.display = 'none'; // Hide the message box as well
+
+    // Create a new element to display the story
+    const storyElement = document.createElement('div');
+    storyElement.className = 'story-box';
+    storyElement.innerHTML = `<h2>Your Story</h2><p>${data.story}</p>`;
+    
+    // Append the story element to the main content area
+    document.querySelector('.participant-sections').parentNode.appendChild(storyElement);
+});
 
   // Emit join event to receive the current question and participant
   socketio.emit("join", { room_code: roomCode });
