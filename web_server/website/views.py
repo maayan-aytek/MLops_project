@@ -207,7 +207,6 @@ def room():
 
     # define participants order done
     if "participants_order" not in rooms[room_code]:
-        print(name, "create participants_order")
         rooms[room_code]["participants_order"] = random.sample(rooms[room_code]["participants"], len(rooms[room_code]["participants"]))
 
     return render_template("room.html", code=room_code, messages=rooms[room_code]["messages"])
@@ -249,11 +248,22 @@ def handle_answer(data):
         if name == current_participant:
             question = data["question"]
             answer = data["answer"]
-            rooms[room_code]["answers"][question] = answer
+            rooms[room_code]["answers"][(name, question)] = answer
 
             # update next turn
             rooms[room_code]['turn_number'] += 1
-            emit("finish_turn", {"room_code":room_code}, room=rooms[room_code]['sid_list'])
+            
+            # Emit update to all participants
+            participant_data = {}
+            for participant in rooms[room_code]["participants_order"]:
+                participant_data[participant] = {
+                    "name": participant,
+                    "questions": [q for p, q in rooms[room_code]["answers"].keys() if p == participant],
+                    "answers": [a for (p, q), a in rooms[room_code]["answers"].items() if p == participant]
+                }
+            
+            emit("update_participant_data", {"participants": participant_data}, room=rooms[room_code]['sid_list'])
+            emit("finish_turn", {"room_code": room_code}, room=rooms[room_code]['sid_list'])
         else:
             emit("unauthorized", {"message": "It's not your turn to answer."}, room=rooms[room_code]['sid_list'])
 
@@ -278,10 +288,11 @@ def next_turn(room_code=None):
             current_question = questions[current_turn]
             current_participant = participants_order[current_turn % n_members]
 
-        emit("question", {
-            "question": current_question,
-            "is_participant_turn": current_participant == name
-        }, room=request.sid)
+            emit("question", {
+                "question": current_question,
+                "is_participant_turn": current_participant == name,
+                "current_participant_name": current_participant,
+            }, room=request.sid)
 
 
 @socketio.on("connect_room")

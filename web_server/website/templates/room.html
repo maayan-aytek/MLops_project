@@ -1,6 +1,11 @@
 {% extends 'base.html' %} 
 {% block content %}
 
+<div class="participant-sections">
+  <!-- Container for dynamically generated participant sections -->
+  <div id="participants-container"></div>
+</div>
+
 <div class="question-box">
   <h2>Current Question</h2>
   <div id="current-question" class="question"></div>
@@ -22,6 +27,7 @@
         crossorigin="anonymous">
 </script>
 <script type="text/javascript">
+  const roomCode = "{{ room_code }}"; // Ensure room_code is passed to the template
   var socketio = io();
 
   const currentQuestion = document.getElementById("current-question");
@@ -29,11 +35,13 @@
   const answerInput = document.getElementById("answer");
   const submitButton = document.getElementById("submit-btn");
   const messageBox = document.getElementById("message-box");
-  const debug = document.getElementById("debug");
+  const participantsContainer = document.getElementById("participants-container");
+
+  const participantSections = {}; // Object to hold participant elements
 
   socketio.on("question", (data) => {
     currentQuestion.innerText = data.question;
-    currentParticipant.innerText = data.is_participant_turn ? "your" : "another participant's";
+    currentParticipant.innerText = data.is_participant_turn ? "your" : data.current_participant_name;
 
     if (data.is_participant_turn) {
       answerInput.disabled = false;
@@ -45,23 +53,60 @@
   });
 
   socketio.on("finish_turn", (data) => {
-    socketio.emit("next_turn", {room_code: `${data.room_code}`});
-});
-
+    socketio.emit("next_turn", { room_code: `${data.room_code}` });
+  });
 
   socketio.on("unauthorized", (data) => {
     messageBox.innerText = data.message;
   });
 
+  socketio.on("update_participant_data", (data) => {
+    // Clear previous data
+    participantsContainer.innerHTML = '';
+
+    // Add participant sections dynamically
+    Object.keys(data.participants).forEach(participantId => {
+        const participantData = data.participants[participantId];
+        
+        // Create a new participant section
+        const section = document.createElement('div');
+        section.className = 'participant-box';
+        section.id = `participant-${participantId}`;
+
+        // Add participant name
+        const nameElem = document.createElement('h3');
+        nameElem.innerText = participantData.name || `Participant ${participantId}`; // Use participant's name or fallback
+        section.appendChild(nameElem);
+
+        // Add questions and answers
+        const qaDiv = document.createElement('div');
+        qaDiv.className = 'qa';
+        section.appendChild(qaDiv);
+
+        // Populate questions and answers
+        participantData.questions.forEach((question, index) => {
+            const questionElem = document.createElement('div');
+            questionElem.innerText = `q${index + 1}: "${question}"`;
+            qaDiv.appendChild(questionElem);
+
+            const answerElem = document.createElement('div');
+            answerElem.innerText = `a${index + 1}: "${participantData.answers[index]}"`;
+            qaDiv.appendChild(answerElem);
+        });
+
+        participantsContainer.appendChild(section);
+    });
+});
+
   const sendAnswer = () => {
     const answer = answerInput.value;
     const question = currentQuestion.innerText;
     if (answer === "" || question === "") return;
-    socketio.emit("answer", { question: question, answer: answer });
+    socketio.emit("answer", { room_code: roomCode, question: question, answer: answer });
     answerInput.value = "";
   };
 
   // Emit join event to receive the current question and participant
-  socketio.emit("join", {});
+  socketio.emit("join", { room_code: roomCode });
 </script>
 {% endblock %}
