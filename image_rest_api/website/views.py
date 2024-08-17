@@ -192,18 +192,17 @@ def get_response():
 
     if similar_story != "Ignored":
         # If story inspiration is given then we will concatenate this part to the prompt
-        similar_story_parts = [f"The story should be inspired by '{similar_story} children book. Here is the book description: {similar_story_description}.",
-                            f"{similar_story}' book is the inspiration, it should echo the essence of its plot without direct replication. Here is the book description: {similar_story_description},",
-                            f"{similar_story}' bookk aim to capture the story spirit and integrate it thoughtfully with a unique twist. Here is the book description: {similar_story_description}."]
+        similar_story_parts = f"The story should be inspired by '{similar_story} children book. Here is the book description: {similar_story_description}.",
+                           
     else:
-        similar_story_parts = ["", "", ""]
+        similar_story_parts = ""
 
     prompt = f"""Generate children story suitable for a {child_age}-year-old {child_gender} child with interests in {child_interests[0]}. 
                 The story should be around {story_reading_time} minutes long. The moral of the story should be '{moral_of_the_story}'.
                 The mode of the story should be {mode}. The main character of the story should be named '{main_character_name}'.
                 Please note that the story doesn't have to include all interests mentioned; it can choose to include only a subset of them.
                 Also, avoid mixing unrelated interests. If there are multiple interests provided, choose at random only one that fits the story context best.
-                {similar_story_parts[0]}
+                {similar_story_parts}
                 Your output must be in the following format: 
                 Title: ...
                 Description: ...

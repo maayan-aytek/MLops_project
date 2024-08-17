@@ -4,7 +4,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-height: 100vh; /* Ensure the body covers at least the full height of the viewport */
+    min-height: 100vh;
     background-image: url('background.png');
     background-size: cover;
     background-position: center;
@@ -64,17 +64,17 @@ body {
 
 .container {
     text-align: center;
-    margin-top: 120px; /* Adjusted margin for the container */
-    max-width: 800px;
-    padding: 20px;
-    background-color: rgba(0, 0, 0, 0.5); /* Add semi-transparent background to container */
+    margin-top: 120px;
+    max-width: 600px;
+    padding: 40px 20px;
+    background-color: rgba(0, 0, 0, 0.5); 
     border-radius: 10px;
 }
 
 .logo {
     width: 150px;
     height: auto;
-    margin: 30px auto; /* This centers the logo horizontally */
+    margin: 30px auto;
     display: block;
 }
 
@@ -87,7 +87,7 @@ h1, h2 {
 p {
     color: white;
     line-height: 1.6;
-    text-align: justify; /* Centered and justified text */
+    text-align: justify; 
     margin: 0 auto;
 }
 
@@ -107,9 +107,10 @@ p {
 form {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 20px;
     max-width: 400px;
     margin: 0 auto;
+    text-align: left; /* Align form text to the left */
 }
 
 input[type="text"], input[type="password"], input[type="number"], select {
@@ -135,7 +136,6 @@ button:hover {
     background-color: #45a049;
 }
 
-/* Back button styling */
 .back-button {
     display: inline-block;
     padding: 10px 20px;
@@ -155,8 +155,9 @@ button:hover {
 }
 
 label {
-    color: white; /* Changes the label text color to white */
-    font-size: 1em; /* You can adjust the font size if needed */
+    color: white;
+    font-size: 1em;
+    text-align: left; /* Align labels to the left */
 }
 
 .action-buttons {
@@ -179,5 +180,52 @@ label {
 
 .tab-container {
     width: 100%;
-    margin-top: 80px; /* Adjust this value to move the container down */
+    margin-top: 20px;
+    background-color: transparent; /* Remove black background */
+    border-radius: 0px; /* Remove the border-radius if present */
+    padding: 20px;
+}
+
+/* Center the title text */
+.tab-content h3 {
+    text-align: center;
+    color: white;
+}
+
+.tabs {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: space-around;
+}
+
+.tabs li {
+    cursor: pointer;
+    padding: 15px 30px;
+    background: #444;
+    color: white;
+    margin-right: 10px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.tabs li:hover {
+    background-color: #666;
+}
+
+.tabs li.active {
+    background: #fff;
+    color: #444;
+    font-weight: bold;
+}
+
+.tab-content {
+    display: none;
+    margin-top: 30px;
+}
+
+.tab-content.active {
+    display: block;
+    color: white;
 }

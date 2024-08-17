@@ -261,6 +261,7 @@ def handle_answer(data):
                     "questions": [q for p, q in rooms[room_code]["answers"].keys() if p == participant],
                     "answers": [a for (p, q), a in rooms[room_code]["answers"].items() if p == participant]
                 }
+
             is_last_turn = current_turn+1==len(questions)
             if not is_last_turn:
                 emit("update_participant_data", {"participants": participant_data}, room=rooms[room_code]['sid_list'])
@@ -294,7 +295,8 @@ def generate_story(room_code=None):
         response = requests.post(API_BASE_URL + "get_story", json={"story_details": story_details})
         story_dict = response.json()
 
-        socketio.emit("story", {"story": story_dict["story"]}, room=rooms[room_code]['sid_list'])
+        socketio.emit("story", {"title":story_dict["title"],
+                                "story": story_dict["story"]}, room=rooms[room_code]['sid_list'])
 
 @socketio.on("next_turn")
 def next_turn(room_code=None):

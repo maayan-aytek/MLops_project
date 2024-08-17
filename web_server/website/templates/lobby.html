@@ -1,40 +1,66 @@
-{% extends 'base.html' %}
-{% block content %}
-<div class="lobby-container">
-  <h2><br>Lobby - {{ code }}</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lobby - CustomTales</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <ul class="nav-links">
+            <li><a href="{{ url_for('views.home_view') }}">Home</a></li>
+            <li><a href="{{ url_for('views.about_us') }}">About Us</a></li>
+            <li><a href="{{ url_for('auth.sign_up') }}">Sign Up</a></li>
+            {% if current_user.is_authenticated %}
+                <li><a href="{{ url_for('views.choose_action') }}">Choose Activity</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            {% else %}
+                <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+            {% endif %}
+        </ul>
+    </nav>
 
-  <h3>Waiting for participants to join...</h3>
-  <div id="participants-list">
-    <!-- List of participants will be dynamically populated here -->
-  </div>
-</div>
+    <div class="container">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="CustomTales Logo" class="logo">
+        <h1>Lobby<br>Room Code - {{ code }}</h1>
+        <br>
+        <h2>Waiting for participants to join...</h2>
+        <br>
+        <div id="participants-list" style="color: white;">
+            <!-- List of participants will be dynamically populated here -->
+        </div>
+        <br>
+        <p style="color: #fff; font-size: 1.2em;">You can invite more participants or wait for the room to fill up.</p>
+    </div>
 
-<script src="https://cdn.socket.io/4.4.0/socket.io.min.js"></script>
-<script>
-  const socket = io();
+    <script src="https://cdn.socket.io/4.4.0/socket.io.min.js"></script>
+    <script>
+        const socket = io();
 
-  // Listen for updates on participants in the room
-  socket.on('update_participants', function(data) {
-    const participantsList = document.getElementById('participants-list');
-    participantsList.innerHTML = '';  // Clear the current list
-    data.participants.forEach(participant => {
-      const div = document.createElement('div');
-      div.textContent = participant;
-      participantsList.appendChild(div);
-    });
+        // Listen for updates on participants in the room
+        socket.on('update_participants', function(data) {
+            const participantsList = document.getElementById('participants-list');
+            participantsList.innerHTML = '';  // Clear the current list
+            data.participants.forEach(participant => {
+                const div = document.createElement('div');
+                div.textContent = participant;
+                participantsList.appendChild(div);
+            });
 
-    // Emit to connect to the room if it's full
-    if (data.is_full) {
-      socket.emit('connect_room');
-    }
-  });
+            // Emit to connect to the room if it's full
+            if (data.is_full) {
+                socket.emit('connect_room');
+            }
+        });
 
-  // Listen for the redirect event and perform the redirection
-  socket.on('redirect_to_room', function(data) {
-    window.location.href = data.url;
-  });
+        // Listen for the redirect event and perform the redirection
+        socket.on('redirect_to_room', function(data) {
+            window.location.href = data.url;
+        });
 
-  // Notify server when user connects to the lobby
-  socket.emit('connect_lobby');
-</script>
-{% endblock %}
+        // Notify server when user connects to the lobby
+        socket.emit('connect_lobby');
+    </script>
+</body>
+</html>

@@ -1,117 +1,94 @@
-{% extends 'base.html' %} 
-{% block content %}
-<div class="tab-container">
-  <ul class="tabs">
-    <li class="tab-link active" data-tab="create">Create a Room</li>
-    <li class="tab-link" data-tab="join">Join a Room</li>
-  </ul>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Rooms - CustomTales</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <ul class="nav-links">
+            <li><a href="{{ url_for('views.home_view') }}">Home</a></li>
+            <li><a href="{{ url_for('views.about_us') }}">About Us</a></li>
+            <li><a href="{{ url_for('auth.sign_up') }}">Sign Up</a></li>
+            {% if current_user.is_authenticated %}
+                <li><a href="{{ url_for('views.choose_action') }}">Choose Activity</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            {% else %}
+                <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+            {% endif %}
+        </ul>
+    </nav>
 
-  <!-- Create a Room Tab -->
-  <div id="create" class="tab-content active">
-    <form method="post" class="buttons" action="{{ url_for('views.handle_room_request') }}">
-      <h3>Create a Chat Room</h3>
-      <div>
-        <label>Name:</label>
-        <input
-          type="text"
-          placeholder="Pick a name!"
-          name="name"
-          value="{{name}}"
-        />
-      </div>
-      <div class="create">
-        <label for="participants">Select Number of Participants:</label>
-        <select name="participants" id="participants">
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-        </select>
-      </div>
-      <input type="hidden" name="action" value="create" />
-      <button type="submit" class="create-btn">Create a Room</button>
-      {% if error %}
-      <ul>
-        <li>{{error}}</li>
-      </ul>
-      {% endif %}
-    </form>
-  </div>
+    <div class="container" style="max-width: 800px; padding: 40px 100px;">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="CustomTales Logo" class="logo">
+        <h1>Manage Rooms</h1>
 
-  <!-- Join a Room Tab -->
-  <div id="join" class="tab-content">
-    <form method="post" class="buttons" action="{{ url_for('views.handle_room_request') }}">
-      <h3>Join a Chat Room</h3>
-      <div>
-        <label>Name:</label>
-        <input
-          type="text"
-          placeholder="Enter your name!"
-          name="name"
-          value="{{name}}"
-        />
-      </div>
-      <div class="join">
-        <label for="code">Room Code:</label>
-        <input
-          type="text"
-          placeholder="Enter the room code"
-          name="code"
-          value="{{code}}"
-        />
-      </div>
-      <input type="hidden" name="action" value="join" />
-      <button type="submit" class="join-btn">Join Room</button>
-      {% if error %}
-      <ul>
-        <li>{{error}}</li>
-      </ul>
-      {% endif %}
-    </form>
-  </div>
-</div>
+        <!-- Create/Join Tabs -->
+        <div class="tab-container">
+            <ul class="tabs">
+                <li class="tab-link active" data-tab="create" style="text-align: center;">Create a Room</li>
+                <li class="tab-link" data-tab="join" style="text-align: center;">Join a Room</li>
+            </ul>
 
-<style>
-  .tab-container {
-    width: 100%;
-  }
-  .tabs {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-  }
-  .tabs li {
-    cursor: pointer;
-    padding: 10px 20px;
-    background: #ddd;
-    margin-right: 5px;
-  }
-  .tabs li.active {
-    background: #f0f0f0;
-    font-weight: bold;
-  }
-  .tab-content {
-    display: none;
-  }
-  .tab-content.active {
-    display: block;
-  }
-</style>
+            <!-- Create a Room Tab -->
+            <div id="create" class="tab-content active">
+                <form method="post" action="{{ url_for('views.handle_room_request') }}">
+                    <h3>Create a Chat Room</h3>
+                    <div>
+                        <label for="name">Name:</label>
+                        <input type="text" id="name" name="name" placeholder="Pick a name!" value="{{ name }}">
+                    </div>
+                    <div>
+                        <label for="participants">Select Number of Participants:</label>
+                        <select name="participants" id="participants">
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
+                    <input type="hidden" name="action" value="create">
+                    <button type="submit" class="create-btn">Create Room</button>
+                    {% if error %}
+                        <ul><li>{{ error }}</li></ul>
+                    {% endif %}
+                </form>
+            </div>
 
-<script>
-  document.querySelectorAll('.tab-link').forEach(tab => {
-    tab.addEventListener('click', function() {
-      const targetTab = this.getAttribute('data-tab');
-      
-      // Remove 'active' class from all tabs and tab content
-      document.querySelectorAll('.tab-link').forEach(item => item.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            <!-- Join a Room Tab -->
+            <div id="join" class="tab-content">
+                <form method="post" action="{{ url_for('views.handle_room_request') }}">
+                    <h3>Join a Chat Room</h3>
+                    <div>
+                        <label for="name">Name:</label>
+                        <input type="text" id="name" name="name" placeholder="Pick a name!" value="{{ name }}">
+                    </div>
+                    <div>
+                        <label for="code">Room Code:</label>
+                        <input type="text" id="code" name="code" placeholder="Enter the room code" value="{{ code }}">
+                    </div>
+                    <input type="hidden" name="action" value="join">
+                    <button type="submit" class="join-btn">Join Room</button>
+                    {% if error %}
+                        <ul><li>{{ error }}</li></ul>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
 
-      // Add 'active' class to the clicked tab and corresponding content
-      this.classList.add('active');
-      document.getElementById(targetTab).classList.add('active');
-    });
-  });
-</script>
-{% endblock %}
+    <script>
+        document.querySelectorAll('.tab-link').forEach(tab => {
+            tab.addEventListener('click', function () {
+                const targetTab = this.getAttribute('data-tab');
+                document.querySelectorAll('.tab-link').forEach(item => item.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                this.classList.add('active');
+                document.getElementById(targetTab).classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

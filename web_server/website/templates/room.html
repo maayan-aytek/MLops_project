@@ -1,5 +1,25 @@
-{% extends 'base.html' %} 
-{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Rooms - CustomTales</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <ul class="nav-links">
+            <li><a href="{{ url_for('views.home_view') }}">Home</a></li>
+            <li><a href="{{ url_for('views.about_us') }}">About Us</a></li>
+            <li><a href="{{ url_for('auth.sign_up') }}">Sign Up</a></li>
+            {% if current_user.is_authenticated %}
+                <li><a href="{{ url_for('views.choose_action') }}">Choose Activity</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            {% else %}
+                <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+            {% endif %}
+        </ul>
+    </nav>
 
 <div class="participant-sections">
   <!-- Container for dynamically generated participant sections -->
@@ -136,7 +156,7 @@
     // Create a new element to display the story
     const storyElement = document.createElement('div');
     storyElement.className = 'story-box';
-    storyElement.innerHTML = `<h2>Your Story</h2><p>${data.story}</p>`;
+    storyElement.innerHTML = `<h2>${data.title}</h2><p>${data.story}</p>`;
     
     // Append the story element to the main content area
     document.querySelector('.participant-sections').parentNode.appendChild(storyElement);
@@ -145,4 +165,5 @@
   // Emit join event to receive the current question and participant
   socketio.emit("join", { room_code: roomCode });
 </script>
-{% endblock %}
+</body>
+</html>
