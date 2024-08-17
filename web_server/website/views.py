@@ -16,12 +16,12 @@ from flask_login import login_required, current_user
 from flask_socketio import emit, join_room, leave_room, send
 from flask import Blueprint, render_template, request, redirect, url_for, Response, current_app, session
 
-questions = [
-    "Moral of the story",
-    "Main charcter name",
-    "Secondery charcter name",
-    "Story mode",
-    "Story inspiration"
+QUESTIONS = [
+    ("Moral of the story",[]),
+    ("Main charcter name",[]),
+    ("Secondery charcter name",[]),
+    ("Story mode",["Classic", "Creative", "Innovative"]),
+    ("Story inspiration",["Ignored", "Where the Wild Things Are", "The Very Hungry Caterpillar", "Charlotte's Web", "Harry Potter and the Sorcerer's Stone", "Goodnight Moon"])
 ]
 
 participent_loc_dict={1:'top',2:'left', 3:'right', 4:'bottom-left', 5:'bottom-right'}
@@ -257,20 +257,15 @@ def handle_answer(data):
             # update next turn
             rooms[room_code]['turn_number'] += 1
             
-            # Emit update to all participants
-            participant_data = {}
-            for participant in rooms[room_code]["participants_order"]:
-                participant_data[participant] = {
-                    "position": rooms[room_code]['position'][participant],
-                    "name": participant,
-                    "questions": [q for p, q in rooms[room_code]["answers"].keys() if p == participant],
-                    "answers": [a for (p, q), a in rooms[room_code]["answers"].items() if p == participant]
-                }
-            print(name, participant_data)
-            is_last_turn = current_turn+1==len(questions)
-            if not is_last_turn:
-                emit("update_participant_data", {"participants": participant_data,
-                                                 "current_participant_name": current_participant}, room=rooms[room_code]['sid_list'])
+
+            is_last_turn = current_turn+1==len(QUESTIONS)
+
+            # if not is_last_turn:
+            emit("update_participant_data", {"current_participant_name": current_participant,
+                                                "current_turn":current_turn,
+                                                "question":question,
+                                                "answer":answer}, room=rooms[room_code]['sid_list'])
+            
             emit("finish_turn", {"room_code": room_code,
                                  "is_last_turn": is_last_turn}, room=rooms[room_code]['sid_list'])
         else:
@@ -301,6 +296,7 @@ def generate_story(room_code=None):
         response = requests.post(API_BASE_URL + "get_story", json={"story_details": story_details})
         story_dict = response.json()
 
+        print(story_dict)
         socketio.emit("story", {"title":story_dict["title"],
                                 "story": story_dict["story"]}, room=rooms[room_code]['sid_list'])
 
@@ -319,11 +315,12 @@ def next_turn(room_code=None):
         n_members = rooms[room_code]["num_members"]
         current_participant = participants_order[current_turn % n_members]
 
-        if current_turn<len(questions):
-            current_question = questions[current_turn]
+        if current_turn<len(QUESTIONS):
+            current_question, options = QUESTIONS[current_turn]
 
             emit("question", {
                 "question": current_question,
+                "options":options,
                 "is_participant_turn": current_participant == name,
                 "current_participant_name": current_participant,
             }, room=request.sid)
