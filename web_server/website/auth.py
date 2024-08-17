@@ -59,6 +59,15 @@ def logout() -> Response:
     return redirect(url_for('auth.login'))
 
 
+def check_strong_password(password):
+    if not any(c.isupper() for c in password) or \
+       not any(c.islower() for c in password) or \
+       not any(c.isdigit() for c in password):
+    
+        return False, "Password should contain at least one Upper case letters: A-Z, one Lowercase letters: a-z, and one Number: 0-9."
+    return True, "True"
+
+
 @auth.route('/sign-up', methods=['GET', 'POST'])
 def sign_up() -> Union[Response, str]:
     """
@@ -74,7 +83,8 @@ def sign_up() -> Union[Response, str]:
         password2 = request.form.get('password2')
 
         message = ''
-        print(first_name, len(first_name))
+        
+        is_password_strong, password_message = check_strong_password(password1)
         user = User.query.filter_by(username=username).first()
         if user:
             flash('Username already exists.', category='error')
@@ -85,6 +95,9 @@ def sign_up() -> Union[Response, str]:
         elif len(first_name) < 1:
             flash('First name must be not empty.', category='error')
             message = 'First name must be not empty.'
+        elif not is_password_strong:
+            flash(password_message, category='error')
+            message = password_message
         elif password1 != password2:
             flash('Passwords don\'t match.', category='error')
             message = 'Passwords don\'t match.'

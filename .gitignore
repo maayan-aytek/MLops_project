@@ -1,4 +1,7 @@
-.vscode
-website/__pycache__
-__pycache__
+# Ignore all .vscode settings
+.vscode/
+
+# Ignore Python cache directories and files
+website/__pycache__/
+__pycache__/
 *.pyc

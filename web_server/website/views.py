@@ -24,6 +24,8 @@ questions = [
     "Story inspiration"
 ]
 
+participent_loc_dict={1:'top',2:'left', 3:'right', 4:'bottom-left', 5:'bottom-right'}
+
 with open('./shared/secrets.json', 'r') as file:
     secrets = json.load(file)
     API_KEY = secrets['API_KEY']
@@ -140,7 +142,8 @@ def handle_room_request():
                 "participants": [name],
                 "answers": {},
                 "sid_list": [],
-                "usernames":[current_user.username]
+                "usernames":[current_user.username],
+                "position": {name:participent_loc_dict[1]}
             }
             session["room"] = room
             session["name"] = name
@@ -160,9 +163,10 @@ def handle_room_request():
             rooms[code]['num_members'] += 1
             rooms[code]['participants'].append(name)
             rooms[code]['usernames'].append(current_user.username)
+            rooms[code]['position'][name] = participent_loc_dict[rooms[code]['num_members']]
             session["room"] = code
             session["name"] = name
-        
+
             return redirect(url_for("views.lobby"))
     
     return render_template("handle_room_request.html")
@@ -237,7 +241,7 @@ def handle_answer(data):
     rooms = current_app.config['rooms']
     room_code = session.get("room")
     name = session.get('name')
-    
+
     if room_code and room_code in rooms:
         current_turn = rooms[room_code]["turn_number"]
         participants_order = rooms[room_code]["participants_order"]
@@ -257,14 +261,16 @@ def handle_answer(data):
             participant_data = {}
             for participant in rooms[room_code]["participants_order"]:
                 participant_data[participant] = {
+                    "position": rooms[room_code]['position'][participant],
                     "name": participant,
                     "questions": [q for p, q in rooms[room_code]["answers"].keys() if p == participant],
                     "answers": [a for (p, q), a in rooms[room_code]["answers"].items() if p == participant]
                 }
-
+            print(name, participant_data)
             is_last_turn = current_turn+1==len(questions)
             if not is_last_turn:
-                emit("update_participant_data", {"participants": participant_data}, room=rooms[room_code]['sid_list'])
+                emit("update_participant_data", {"participants": participant_data,
+                                                 "current_participant_name": current_participant}, room=rooms[room_code]['sid_list'])
             emit("finish_turn", {"room_code": room_code,
                                  "is_last_turn": is_last_turn}, room=rooms[room_code]['sid_list'])
         else:
@@ -308,7 +314,6 @@ def next_turn(room_code=None):
         room_code = session.get("room")
     
     if room_code and room_code in rooms:
-
         current_turn = rooms[room_code]['turn_number']
         participants_order = rooms[room_code]["participants_order"]
         n_members = rooms[room_code]["num_members"]

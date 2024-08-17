@@ -8,8 +8,7 @@
 </head>
 <body>
     <nav class="navbar">
-        <div class="nav-logo">
-        </div>
+        <div class="nav-logo"></div>
         <ul class="nav-links">
             <li><a href="{{ url_for('views.home_view') }}">Home</a></li>
             <li><a href="{{ url_for('views.about_us') }}">About Us</a></li>
@@ -27,29 +26,49 @@
         <h2>Please fill here your child's information:</h2>
         <form action="{{ url_for('auth.sign_up') }}" method="post">
             <label for="username">Username</label>
-            <input type="text" id="username" name="username" required>
+            <div class="tooltip">
+                <input type="text" id="username" name="username" required>
+            </div>
 
             <label for="password">Password</label>
-            <input type="password" id="password1" name="password1" required>
+            <div class="tooltip">
+                <input type="password" id="password1" name="password1" required>
+                <span class="tooltiptext">Passwords should contain the following character types:<br>Uppercase letters: A-Z<br>Lowercase letters: a-z<br>Numbers: 0-9</span>
+            </div>
 
-            <label for="password">Confirm Password</label>
-            <input type="password" id="password2" name="password2" required>
+            <label for="password2">Confirm Password</label>
+            <div class="tooltip">
+                <input type="password" id="password2" name="password2" required>
+                <span class="tooltiptext">Re-enter the password to confirm.</span>
+            </div>
 
             <label for="name">Name</label>
-            <input type="text" id="name" name="name" required>
+            <div class="tooltip">
+                <input type="text" id="name" name="name" required>
+                <span class="tooltiptext">Enter your child's full name.</span>
+            </div>
 
             <label for="gender">Gender</label>
-            <select id="gender" name="gender" required>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-            </select>
+            <div class="tooltip">
+                <select id="gender" name="gender" required>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+                <span class="tooltiptext">Select your child's gender.</span>
+            </div>
 
             <label for="age">Age</label>
-            <input type="number" id="age" name="age" required>
+            <div class="tooltip">
+                <input type="number" id="age" name="age" required>
+                <span class="tooltiptext">Enter your child's age.</span>
+            </div>
 
             <label for="interests">Interests</label>
-            <input type="text" id="interests" name="interests" required>
+            <div class="tooltip">
+                <input type="text" id="interests" name="interests" placeholder="E.g: football, science, princesses, cars, painting..." required>
+                <span class="tooltiptext">Enter your child's interests separated by commas.<br>You can write one or multiple interests.</span>
+            </div>
 
             <button type="submit">Register</button>
         </form>

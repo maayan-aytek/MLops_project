@@ -21,30 +21,54 @@
         </ul>
     </nav>
 
-<div class="participant-sections">
-  <!-- Container for dynamically generated participant sections -->
-  <div id="participants-container"></div>
-</div>
+    <div class="game-container">
+      <div class="question-box">
+          <h2>Current Question</h2>
+          <div id="current-question" class="question"></div>
+      </div>
 
-<div class="question-box">
-  <h2>Current Question</h2>
-  <div id="current-question" class="question"></div>
-</div>
+      <div class="book-container">
+          <!-- <img src="{{ url_for('static', filename='book_image.png') }}" alt="Magical Book" class="book-image"> -->
+      </div>
 
-<div class="participant-box">
-  <h3>It's <span id="current-participant"></span>'s turn to answer.</h3>
-</div>
+      <!-- Define 5 participant positions -->
+      <div class="participant top-participant">
+          <h3 id="participant-top"></h3>
+          <div id="qa-top"></div>
+      </div>
+      <div class="participant left-participant">
+          <h3 id="participant-left"></h3>
+          <div id="qa-left"></div>
+      </div>
+      <div class="participant right-participant">
+          <h3 id="participant-right"></h3>
+          <div id="qa-right"></div>
+      </div>
+      <div class="participant bottom-left-participant">
+          <h3 id="participant-bottom-left"></h3>
+          <div id="qa-bottom-left"></div>
+      </div>
+      <div class="participant bottom-right-participant">
+          <h3 id="participant-bottom-right"></h3>
+          <div id="qa-bottom-right"></div>
+      </div>
+    </div>
 
-<div class="answer-box">
-  <textarea id="answer" rows="4" placeholder="Type your answer here..." disabled></textarea>
-  <button id="submit-btn" onClick="sendAnswer()" disabled>Submit Answer</button>
-</div>
+    <div class="participant-box">
+        <h3>It's <span id="current-participant"></span>'s turn to answer.</h3>
+    </div>
 
-<div id="message-box" style="color: red;"></div>
+    <!-- Answer box for the current participant -->
+    <div class="answer-box">
+        <textarea id="answer" rows="4" placeholder="Type your answer here..." disabled></textarea>
+        <button id="submit-btn" onClick="sendAnswer()" disabled>Submit Answer</button>
+    </div>
 
-<div id="generating-story-message" style="display: none;">
-  <h2>Generating the story...</h2>
-</div>
+    <!-- Message and story generation -->
+    <div id="message-box" style="color: red;"></div>
+    <div id="generating-story-message" style="display: none;">
+        <h2>Generating the story...</h2>
+    </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
         integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
@@ -99,41 +123,49 @@
   });
 
   socketio.on("update_participant_data", (data) => {
-    // Clear previous data
-    participantsContainer.innerHTML = '';
+    // Define all possible positions
+    const positions = ["top", "left", "right", "bottom-left", "bottom-right"];
 
-    // Add participant sections dynamically
-    Object.keys(data.participants).forEach(participantId => {
-        const participantData = data.participants[participantId];
-        
-        // Create a new participant section
-        const section = document.createElement('div');
-        section.className = 'participant-box';
-        section.id = `participant-${participantId}`;
+    // Hide all participant sections initially
+    // positions.forEach(position => {
+    //     const participantNameElem = document.getElementById(`participant-${position}`);
+    //     const qaContainer = document.getElementById(`qa-${position}`);
+    //     participantNameElem.innerText = '';
+    //     qaContainer.innerHTML = '';
+    //     // participantNameElem.parentElement.style.display = 'none';
+    // });
 
-        // Add participant name
-        const nameElem = document.createElement('h3');
-        nameElem.innerText = participantData.name || `Participant ${participantId}`; // Use participant's name or fallback
-        section.appendChild(nameElem);
+      
+      const participantData = data.participants[data.current_participant_name];
+      const position = participantData.position; // Ensure this matches the backend
 
-        // Add questions and answers
-        const qaDiv = document.createElement('div');
-        qaDiv.className = 'qa';
-        section.appendChild(qaDiv);
+      // Show and set participant's name in the correct position
+      const participantNameElem = document.getElementById(`participant-${position}`);
+      participantNameElem.innerText = participantData.name;
+      participantNameElem.parentElement.style.display = 'block';
 
-        // Populate questions and answers
-        participantData.questions.forEach((question, index) => {
-            const questionElem = document.createElement('div');
-            questionElem.innerText = `q${index + 1}: "${question}"`;
-            qaDiv.appendChild(questionElem);
+      // Get the question and answer container for this participant
+      const qaContainer = document.getElementById(`qa-${position}`);
+      qaContainer.innerHTML = '';
+      
+      // Populate questions and answers
+      participantData.questions.forEach((question, index) => {
+          // Create a div to hold the question-answer pair
+          const qaPairDiv = document.createElement('div');
 
-            const answerElem = document.createElement('div');
-            answerElem.innerText = `a${index + 1}: "${participantData.answers[index]}"`;
-            qaDiv.appendChild(answerElem);
-        });
+          // Create and set question element
+          const questionElem = document.createElement('p');
+          questionElem.innerText = `Q${index + 1}: "${question}"`;
+          qaPairDiv.appendChild(questionElem);
 
-        participantsContainer.appendChild(section);
-    });
+          // Create and set answer element
+          const answerElem = document.createElement('p');
+          answerElem.innerText = `A${index + 1}: "${participantData.answers[index]}"`;
+          qaPairDiv.appendChild(answerElem);
+
+          // Append the question-answer pair to the container
+          qaContainer.appendChild(qaPairDiv);
+      });
 });
 
   const sendAnswer = () => {
@@ -144,26 +176,17 @@
     answerInput.value = "";
   };
   
-  socketio.on("story", (data) => {
-    // Hide all elements
-    generatingStoryMessage.style.display = 'none';
-    document.querySelector('.participant-sections').style.display = 'none';
-    document.querySelector('.question-box').style.display = 'none';
-    document.querySelector('.participant-box').style.display = 'none';
-    document.querySelector('.answer-box').style.display = 'none';
-    messageBox.style.display = 'none'; // Hide the message box as well
+socketio.on("story", (data) => {
+            generatingStoryMessage.style.display = 'none';
+            const storyElement = document.createElement('div');
+            storyElement.className = 'story-box';
+            storyElement.innerHTML = `<h2>${data.title}</h2><p>${data.story}</p>`;
+            document.querySelector('.participant-sections').parentNode.appendChild(storyElement);
+        });
 
-    // Create a new element to display the story
-    const storyElement = document.createElement('div');
-    storyElement.className = 'story-box';
-    storyElement.innerHTML = `<h2>${data.title}</h2><p>${data.story}</p>`;
-    
-    // Append the story element to the main content area
-    document.querySelector('.participant-sections').parentNode.appendChild(storyElement);
-});
+// Emit join event to receive the current question and participant
 
-  // Emit join event to receive the current question and participant
-  socketio.emit("join", { room_code: roomCode });
+socketio.emit("join", { room_code: roomCode });
 </script>
 </body>
 </html>

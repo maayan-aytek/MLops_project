@@ -25,13 +25,14 @@
         <img src="{{ url_for('static', filename='logo.png') }}" alt="CustomTales Logo" class="logo">
         <h1>Lobby<br>Room Code - {{ code }}</h1>
         <br>
+        <!-- <p style="color: #fff; font-size: 1.2em;">You can invite more participants or wait for the room to fill up.</p> -->
+        <br>
         <h2>Waiting for participants to join...</h2>
         <br>
-        <div id="participants-list" style="color: white;">
+        <div id="participants-list" style="color: white; font-size: large;">
             <!-- List of participants will be dynamically populated here -->
         </div>
         <br>
-        <p style="color: #fff; font-size: 1.2em;">You can invite more participants or wait for the room to fill up.</p>
     </div>
 
     <script src="https://cdn.socket.io/4.4.0/socket.io.min.js"></script>
@@ -44,7 +45,7 @@
             participantsList.innerHTML = '';  // Clear the current list
             data.participants.forEach(participant => {
                 const div = document.createElement('div');
-                div.textContent = participant;
+                div.textContent = `${participant} joined the room`;
                 participantsList.appendChild(div);
             });
 
