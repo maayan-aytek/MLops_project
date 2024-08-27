@@ -1,6 +1,6 @@
 from .models import User
 from .database import db
-from typing import Union, Optional
+from typing import Union
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))

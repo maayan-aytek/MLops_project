@@ -26,10 +26,10 @@
         <img src="{{ url_for('static', filename='logo.png') }}" alt="CustomTales Logo" class="logo">
         <h1>What would you like to do?</h1>
         <div class="action-buttons">
-            <a href="{{ url_for('views.upload_image') }}" class="action-btn">
+            <a href="{{ url_for('image_classification.upload_image') }}" class="action-btn">
                 <img src="{{ url_for('static', filename='upload_image.png') }}" alt="Upload Image">
             </a>
-            <a href="{{ url_for('views.handle_room_request') }}" class="action-btn">
+            <a href="{{ url_for('story_generation.handle_room_request') }}" class="action-btn">
                 <img src="{{ url_for('static', filename='create_room_story.png') }}" alt="Create Room for Story">
             </a>
         </div>

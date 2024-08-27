@@ -241,7 +241,6 @@ const sendAnswer = (inputElement, answerBox) => {
     bottomRightContainer.style.marginRight  = '100px';
     bottomRightContainer.style.marginTop  = '-100px';
 
-
     // Center the story on the page
     storyElement.style.margin = 'auto';
     storyElement.style.width = '80%'; // Adjust width for responsiveness
@@ -254,9 +253,6 @@ const sendAnswer = (inputElement, answerBox) => {
     document.querySelector('.answer-box').style.display = 'none';
     document.querySelector('.participant-box').style.display = 'none';
 });
-
-
-
 
   socketio.emit("join", { room_code: roomCode });
 </script>

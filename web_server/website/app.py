@@ -11,10 +11,13 @@ socketio = SocketIO()
 DB_NAME = "database.db"
 def create_app() -> Flask:
     from .auth import auth
-    from .views import views
     from .models import User
+    from .views import views
     from .database import init_db
     from shared.utils import create_json_response
+    from .story_generation import story_generation
+    from .image_classification import image_classification
+    
 
     """
     Create and configure the Flask application.
@@ -39,6 +42,8 @@ def create_app() -> Flask:
 
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
+    app.register_blueprint(story_generation, url_prefix='/')
+    app.register_blueprint(image_classification, url_prefix='/')
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'

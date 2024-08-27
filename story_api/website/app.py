@@ -1,6 +1,6 @@
 import time
 from flask import Flask
-from .image_api import image_api
+from .story_api import story_api
 
 
 def create_app() -> Flask:
@@ -17,7 +17,7 @@ def create_app() -> Flask:
     app.config['FAIL'] = 0
     app.config['START_TIME'] = time.time()
     app.config['process_dict'] = {}
-
-    app.register_blueprint(image_api, url_prefix='/')
+    
+    app.register_blueprint(story_api, url_prefix='/')
 
     return app

@@ -1,5 +1,12 @@
+import os
+import json
+import random
+from string import ascii_uppercase
+import google.generativeai as genai
 from typing import List, Dict, Union
 from flask import jsonify, Response, current_app
+
+MODEL = None
 
 def create_json_response(data: Union[List, Dict], status_code: int) -> Response:
     """
@@ -26,3 +33,30 @@ def create_json_response(data: Union[List, Dict], status_code: int) -> Response:
     response.headers['Content-Type'] = 'application/json'
     return response
 
+
+def get_LLM_model():
+    global MODEL
+    if MODEL is None:
+        # Load API key from secrets file
+        with open(os.path.join('shared', 'secrets.json'), 'r') as file:
+            secrets = json.load(file)
+            API_KEY = secrets['API_KEY']
+
+        # Configuring Gemini API 
+        genai.configure(api_key=API_KEY)
+        MODEL = genai.GenerativeModel('gemini-1.5-flash')
+
+    return MODEL
+
+
+
+def generate_unique_code(length, rooms):
+    while True:
+        code = ""
+        for _ in range(length):
+            code += random.choice(ascii_uppercase)
+        
+        if code not in rooms:
+            break
+    
+    return code

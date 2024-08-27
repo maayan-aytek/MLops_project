@@ -34,11 +34,11 @@
 
             <!-- Create a Room Tab -->
             <div id="create" class="tab-content active">
-                <form method="post" action="{{ url_for('views.handle_room_request') }}">
+                <form method="post" action="{{ url_for('story_generation.handle_room_request') }}">
                     <h3>Create a Chat Room</h3>
                     <div>
-                        <label for="name">Name:</label>
-                        <input type="text" id="name" name="name" placeholder="Pick a name!" value="{{ name }}">
+                        <label for="nickname">Nickname:</label>
+                        <input type="text" id="nickname" name="nickname" placeholder="Pick a Nickname!" value="{{ nickname }}">
                     </div>
                     <div>
                         <label for="participants">Select Number of Participants:</label>
@@ -59,11 +59,11 @@
 
             <!-- Join a Room Tab -->
             <div id="join" class="tab-content">
-                <form method="post" action="{{ url_for('views.handle_room_request') }}">
+                <form method="post" action="{{ url_for('story_generation.handle_room_request') }}">
                     <h3>Join a Chat Room</h3>
                     <div>
-                        <label for="name">Name:</label>
-                        <input type="text" id="name" name="name" placeholder="Pick a name!" value="{{ name }}">
+                        <label for="nickname">Nickname:</label>
+                        <input type="text" id="nickname" name="nickname" placeholder="Pick a Nickname!" value="{{ nickname }}">
                     </div>
                     <div>
                         <label for="code">Room Code:</label>
