@@ -9,14 +9,14 @@
 <body>
     <nav class="navbar">
         <ul class="nav-links">
-            <li><a href="{{ url_for('views.home_view') }}">Home</a></li>
-            <li><a href="{{ url_for('views.about_us') }}">About Us</a></li>
-            <li><a href="{{ url_for('auth.sign_up') }}">Sign Up</a></li>
+            <li><a href="{{ url_for('views.home_view') }}" onclick="leaveRoom()">Home</a></li>
+            <li><a href="{{ url_for('views.about_us') }}" onclick="leaveRoom()">About Us</a></li>
             {% if current_user.is_authenticated %}
-                <li><a href="{{ url_for('views.choose_action') }}">Choose Activity</a></li>
-                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+                <li><a href="{{ url_for('views.choose_action') }}" onclick="leaveRoom()">Choose Activity</a></li>
+                <li><a href="{{ url_for('views.choose_action') }}" onclick="leaveRoom()">Leave Room</button></a></li>
+                <li><a href="{{ url_for('auth.logout') }}" onclick="leaveRoom()">Logout</a></li>
             {% else %}
-                <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+                <li><a href="{{ url_for('auth.login') }}" onclick="leaveRoom()">Login</a></li>
             {% endif %}
         </ul>
     </nav>
@@ -65,6 +65,8 @@
         <h2>Generating the story...</h2>
     </div>
 
+
+    <!-------------------------- Java Script -------------------------->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
         integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
         crossorigin="anonymous">
@@ -77,6 +79,21 @@
   const currentParticipant = document.getElementById("current-participant");
   const messageBox = document.getElementById("message-box");
   const generatingStoryMessage = document.getElementById("generating-story-message");
+
+
+    // Leave Room Logic
+    const leaveRoom = () => {
+    socketio.emit("disconnect_room");
+    };
+
+
+    socketio.on("AlertleaveRoom", (data) => {
+    alert(data.nickname + ' has left the room');
+    if (data.call_next_turn){
+        socketio.emit("next_turn", { room_code: data.room_code });
+    }
+    });
+
 
   socketio.on("question", (data) => {
     currentQuestion.innerText = data.question;
@@ -165,35 +182,48 @@ const sendAnswer = (inputElement, answerBox) => {
     messageBox.innerText = data.message;
   });
 
-  socketio.on("update_participant_data", (data) => {    
-    const positions = ["top", "left", "bottom-left" , "bottom-right", "right"];  
+socketio.on("update_participant_data", (data) => {
+    const positions = ["top", "left", "bottom-left", "bottom-right", "right"];
+    
+    // Clear existing content
+    positions.forEach(position => {
+        const participantNameElem = document.getElementById(`participant-${position}`);
+        participantNameElem.innerText = '';
+        participantNameElem.parentElement.style.display = 'block';
 
-    const position = positions[data.current_turn]; // Ensure this matches the backend
+        const qaContainer = document.getElementById(`qa-${position}`);
+        qaContainer.innerHTML = '';
+    });
 
-    // Show and set participant's name in the correct position
-    const participantNameElem = document.getElementById(`participant-${position}`);
-    participantNameElem.innerText = data.current_participant_name;
-    participantNameElem.parentElement.style.display = 'block';
+    // Process the history data
+    data.forEach(roundDetails => {
+        const position = positions[roundDetails.current_turn % positions.length];
+        
+        // Show and set participant's name in the correct position
+        const participantNameElem = document.getElementById(`participant-${position}`);
+        participantNameElem.innerText = roundDetails.current_participant_name;
+        participantNameElem.parentElement.style.display = 'block';
 
-    // Get the question and answer container for this participant
-    const qaContainer = document.getElementById(`qa-${position}`);
-    qaContainer.innerHTML = '';
+        // Get the question and answer container for this participant
+        const qaContainer = document.getElementById(`qa-${position}`);
+        qaContainer.innerHTML = '';
 
-    const qaPairDiv = document.createElement('div');
-    qaPairDiv.style.textAlign = 'center';
+        const qaPairDiv = document.createElement('div');
+        qaPairDiv.style.textAlign = 'center';
 
-    const questionElem = document.createElement('p');
-    questionElem.innerHTML = `<strong>${data.question}</strong>`;
-    questionElem.style.textAlign = 'center';
-    qaPairDiv.appendChild(questionElem);
+        const questionElem = document.createElement('p');
+        questionElem.innerHTML = `<strong>${roundDetails.question}</strong>`;
+        questionElem.style.textAlign = 'center';
+        qaPairDiv.appendChild(questionElem);
 
-    const answerElem = document.createElement('p');
-    answerElem.innerText = `${data.answer}`;
-    answerElem.style.textAlign = 'center';
-    qaPairDiv.appendChild(answerElem);
+        const answerElem = document.createElement('p');
+        answerElem.innerText = `${roundDetails.answer}`;
+        answerElem.style.textAlign = 'center';
+        qaPairDiv.appendChild(answerElem);
 
-    qaContainer.appendChild(qaPairDiv);
-  });
+        qaContainer.appendChild(qaPairDiv);
+    });
+});
 
 
   socketio.on("story", (data) => {

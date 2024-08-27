@@ -35,32 +35,54 @@ def handle_room_request():
             rooms[room] = {
                 "turn_number": 0,
                 "max_participants": int(num_participants),
-                "messages": [],
-                "answers": {},
+                "history": [],
                 "sid_list": [],
-                "participants_info": {current_user.username: {"position": PARTICIPANTS_LOC[1], "nickname": nickname}}
+                "nickname_dict": {current_user.username: nickname}
             }
             session["room"] = room
             
             return redirect(url_for("story_generation.lobby"))
         
         elif action == "join":
-            code = request.form.get("code")
-            if not code:
+            room_code = request.form.get("code")
+            if not room_code:
                 return render_template("handle_room_request.html", error="Please enter a room code.", nick_name=nickname)
-            if code not in rooms:
-                return render_template("handle_room_request.html", error="Room does not exist.", nick_name=nickname, code=code)
+            if room_code not in rooms:
+                return render_template("handle_room_request.html", error="Room does not exist.", nick_name=nickname, code=room_code)
             
-            n_members = len(rooms[code]['participants_info'])
-            if  n_members >= rooms[code]['max_participants']:
-                return render_template("handle_room_request.html", error="The room is already full, please create a new room.", nickname=nickname, code=code)
+            n_members = len(rooms[room_code]['nickname_dict'])
+            if  n_members >= rooms[room_code]['max_participants']:
+                return render_template("handle_room_request.html", error="The room is already full, please create a new room.", nickname=nickname, code=room_code)
             
-            rooms[code]['participants_info'][current_user.username] = {'position': PARTICIPANTS_LOC[n_members], 'nickname': nickname}
-            session["room"] = code
+            rooms[room_code]['nickname_dict'][current_user.username] = nickname
+            session["room"] = room_code
 
             return redirect(url_for("story_generation.lobby"))
     
     return render_template("handle_room_request.html")
+
+
+@socketio.on("disconnect_room")
+def disconnect_room():
+    rooms = current_app.config['rooms']
+    room_code = session.get("room")
+    
+    turn_number = rooms[room_code]['turn_number']
+    n_members = len(rooms[room_code]['nickname_dict'])
+    current_username_turn = rooms[room_code]["participants_order"][turn_number % n_members]
+    current_nickname = rooms[room_code]["nickname_dict"][current_user.username]
+
+    rooms[room_code]["participants_order"].remove(current_user.username)
+    rooms[room_code]['sid_list'].remove(request.sid)
+    del rooms[room_code]["nickname_dict"][current_user.username]
+
+    if n_members - 1 == 0:
+        return
+        
+    print("current_username_turn:", current_username_turn, "current_user.username:",current_user.username)
+    emit("AlertleaveRoom", {'nickname': current_nickname, 
+                            'call_next_turn':current_username_turn == current_user.username,
+                            'room_code':room_code}, room=rooms[room_code]['sid_list'])
 
 
 @socketio.on("connect_lobby")
@@ -71,7 +93,7 @@ def connect_lobby():
     if not room_code or room_code not in rooms:
         return
     
-    participants_names = [values['nickname'] for values in rooms[room_code]["participants_info"].values()]
+    participants_names = list(rooms[room_code]["nickname_dict"].values())
     is_full = len(participants_names) >= rooms[room_code]['max_participants']
     
     # add sids
@@ -88,10 +110,10 @@ def lobby():
     rooms = current_app.config['rooms']
     room_code = session.get("room")
 
-    if room_code is None or rooms[room_code]['participants_info'][current_user.username]['nickname'] == '' or room_code not in rooms:
+    if room_code is None or rooms[room_code]['nickname_dict'][current_user.username] == '' or room_code not in rooms:
         return redirect(url_for("story_generation.handle_room_request"))
 
-    participants_names = [values['nickname'] for values in rooms[room_code]["participants_info"].values()]
+    participants_names = list(rooms[room_code]["nickname_dict"].values())
     return render_template("lobby.html", code=room_code, participants=participants_names, is_full=len(participants_names) >= rooms[room_code]["max_participants"])
 
 
@@ -100,7 +122,7 @@ def connect_room():
     rooms = current_app.config['rooms']
     room_code = session.get("room")
 
-    if not room_code or not rooms[room_code]['participants_info'][current_user.username]['nickname']:
+    if not room_code or not rooms[room_code]['nickname_dict'][current_user.username]:
         return
     if room_code not in rooms:
         leave_room(room_code)
@@ -115,7 +137,7 @@ def connect_room():
 def room():
     rooms = current_app.config['rooms']
     room_code = session.get("room")
-    participants = rooms[room_code]['participants_info'].keys()
+    participants = list(rooms[room_code]['nickname_dict'].keys())
 
     if room_code is None or room_code not in rooms:
         return redirect(url_for("handle_room_request"))
@@ -124,7 +146,7 @@ def room():
     if "participants_order" not in rooms[room_code]:
         rooms[room_code]["participants_order"] = random.sample(participants, len(participants))
 
-    return render_template("room.html", code=room_code, messages=rooms[room_code]["messages"])
+    return render_template("room.html", code=room_code)
 
 
 @socketio.on("join")
@@ -135,16 +157,7 @@ def handle_join(data):
     if room_code and room_code in rooms:
         rooms[room_code]['sid_list'].append(request.sid)
         emit("finish_turn", {"room_code":room_code}, room=request.sid)
-
-
-@socketio.on("message")
-def handle_message(data):
-    rooms = current_app.config['rooms']
-    room_code = session.get("room")
-    if room_code and room_code in rooms:
-        rooms[room_code]["messages"].append(data)
-
-        emit("message", data, room=rooms[room_code]['sid_list'])
+        emit("update_participant_data", rooms[room_code]["history"], room=rooms[room_code]['sid_list'])
 
 
 @socketio.on("answer")
@@ -155,24 +168,25 @@ def handle_answer(data):
     if room_code and room_code in rooms:
         current_turn = rooms[room_code]["turn_number"]
         participants_order = rooms[room_code]["participants_order"]
-        n_members = len(rooms[room_code]['participants_info'])
+        n_members = len(rooms[room_code]['nickname_dict'])
         
         current_participant = participants_order[current_turn % n_members]
 
         if current_user.username == current_participant:
             question = data["question"]
             answer = data["answer"]
-            nickname = rooms[room_code]['participants_info'][current_user.username]['nickname']
-            rooms[room_code]["answers"][(nickname, question)] = answer
-
+            nickname = rooms[room_code]['nickname_dict'][current_user.username]
+            round_details =  {"current_participant_name": nickname,
+                              "current_turn":current_turn,
+                              "question":question,
+                              "answer":answer}
+            rooms[room_code]["history"].append(round_details)
+                
             # update next turn
             rooms[room_code]['turn_number'] += 1
             is_last_turn = current_turn + 1 == len(QUESTIONS)
 
-            emit("update_participant_data", {"current_participant_name": nickname,
-                                                "current_turn":current_turn,
-                                                "question":question,
-                                                "answer":answer}, room=rooms[room_code]['sid_list'])
+            emit("update_participant_data", rooms[room_code]["history"], room=rooms[room_code]['sid_list'])
             
             emit("finish_turn", {"room_code": room_code,
                                  "is_last_turn": is_last_turn}, room=rooms[room_code]['sid_list'])
@@ -191,17 +205,17 @@ def next_turn(room_code=None):
     if room_code and room_code in rooms:
         current_turn = rooms[room_code]['turn_number']
         participants_order = rooms[room_code]["participants_order"]
-        n_members = len(rooms[room_code]['participants_info'])
+        n_members = len(rooms[room_code]['nickname_dict'])
         current_participant = participants_order[current_turn % n_members]
 
-        if current_turn<len(QUESTIONS):
+        if current_turn < len(QUESTIONS):
             current_question, options = QUESTIONS[current_turn]
 
             emit("question", {
-                "question": current_question,
-                "options":options,
-                "is_participant_turn": current_participant == current_user.username,
-                "current_participant_name": rooms[room_code]['participants_info'][current_participant]['nickname'],
+                 "question": current_question,
+                 "options": options,
+                 "is_participant_turn": current_participant == current_user.username,
+                 "current_participant_name": rooms[room_code]['nickname_dict'][current_participant],
             }, room=request.sid)
 
 
@@ -212,24 +226,24 @@ def generate_story(room_code=None):
 
     current_turn = rooms[room_code]['turn_number']
     participants_order = rooms[room_code]["participants_order"]
-    n_members = len(rooms[room_code]["participants_info"])
+    n_members = len(rooms[room_code]["nickname_dict"])
     current_participant = participants_order[current_turn % n_members]
 
     if current_participant == current_user.username:
-        answers = list(rooms[room_code]['answers'].values())
+        answers = [details['answer'] for details in rooms[room_code]['history']]
         story_details = {
-                            "members":list(rooms[room_code]['participants_info'].keys()),
+                            "members":list(rooms[room_code]['nickname_dict'].keys()),
                             "moral_of_the_story": answers[0],
-                            "mode":answers[1],
-                            "main_character_name":answers[2],
-                            "secondary_character_name":answers[3],
-                            "story_inspiration":answers[4]
+                            "mode": answers[1],
+                            "main_character_name": answers[2],
+                            "secondary_character_name": answers[3],
+                            "story_inspiration": answers[4]
                         }
                         
         response = requests.post(STORY_API_BASE_URL + "get_story", json={"story_details": story_details})
         story_dict = response.json()
 
-        socketio.emit("story", {"title":story_dict["title"],
+        socketio.emit("story", {"title": story_dict["title"],
                                 "story": story_dict["story"]}, room=rooms[room_code]['sid_list'])
 
 
