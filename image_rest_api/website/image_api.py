@@ -9,11 +9,15 @@ from typing import Union, Optional
 from flask import Blueprint, request, redirect, url_for, Response, current_app
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from shared.utils import *
+from shared.constants import MONGO_CLIENT
 
 model = get_LLM_model()
 
 # Define Blueprint
 image_api = Blueprint('image_api', __name__)
+
+db = MONGO_CLIENT['image_rest_api']
+monitor_collection = db['monitor_health']
 
 def classify_image(img: str) -> Optional[str]:
     """
@@ -24,12 +28,17 @@ def classify_image(img: str) -> Optional[str]:
     Returns:
         Optional[str]: The classification result, or None if classification fails.
     """
-    response = model.generate_content(["What is the main object in the photo? answer just in one word- the main object", img], stream=True)
-    response.resolve()
-    classification = response.text
-    if classification:
-        return {'matches': [{'name': classification, 'score': 0.9}]}
-    return None
+    try:
+        response = model.generate_content(["What is the main object in the photo? answer just in one word- the main object", img], stream=True)
+        response.resolve()
+        classification = response.text
+        if classification:
+            return {'matches': [{'name': classification, 'score': 0.9}]}
+        else:
+            return None
+    except:
+        return None
+
 
 @image_api.route('/', methods=['GET'])
 def home() -> Response:
@@ -44,18 +53,14 @@ def home() -> Response:
 
 @image_api.route('/status', methods=['GET'])
 def status():
-    running = 0
-    for process in current_app.config['process_dict'].values():
-        if not process.done():
-            running += 1
-
+    montor_dict = monitor_collection.find_one()
     data = {
-        'uptime': time.time() - current_app.config['START_TIME'],
+        'uptime': time.time() - montor_dict['start_time'],
         'processed': {
-            'success': current_app.config['SUCCESS'],
-            'fail': current_app.config['FAIL'],     
-            'running': running,
-            'queued': 0   
+            'success': montor_dict['success'],
+            'fail': montor_dict['fail'],     
+            'running': montor_dict['running'],
+            'queued': 0 
         },
         'health': 'ok',
         'api_version': 0.3,
@@ -64,6 +69,7 @@ def status():
 
 
 @image_api.route('/upload_image', methods=['POST'])
+@monitor_status(monitor_collection)
 def upload_image() -> Union[Response, str]:
     """
     Handle sync image upload and classification.
@@ -98,6 +104,7 @@ def execute_async_upload_image(image_data):
 
 
 @image_api.route('/async_upload', methods=['POST'])
+@monitor_status(monitor_collection)
 def async_upload() -> Union[Response, str]:
     """
     Handle async image upload and classification.
@@ -121,7 +128,6 @@ def async_upload() -> Union[Response, str]:
         current_app.config['process_dict'][str(request_id)] = future
         time.sleep(1)
     return create_json_response({'request_id': request_id}, 202)
-
 
 
 @image_api.route('/result/<request_id>', methods=['GET'])

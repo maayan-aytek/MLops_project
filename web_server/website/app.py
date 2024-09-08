@@ -4,17 +4,16 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 import time
 from flask import Flask
 from typing import Dict, Any
-from flask_pymongo import PyMongo
-from pymongo import MongoClient
 from flask_socketio import SocketIO
+from shared.constants import MONGO_CLIENT
 from flask_login import LoginManager, current_user
+
 socketio = SocketIO()
 
 def create_app() -> Flask:
     from .auth import auth
     from .models import User
     from .views import views
-    from .database import init_db
     from shared.utils import create_json_response
     from .story_generation import story_generation
     from .image_classification import image_classification
@@ -34,10 +33,9 @@ def create_app() -> Flask:
     app.config['START_TIME'] = time.time()
     app.config['image_dict'] = {}
     app.config['rooms'] = {}
-    client = MongoClient('mongodb://10.0.0.6:27017/')
-    db = client['customtales']
+    
+    db = MONGO_CLIENT['customtales']
     users_collection = db['users']
-    app.config['MONGO_CLIENT'] = client
     app.config['MONGO_DB'] = users_collection
     
     socketio.init_app(app)  

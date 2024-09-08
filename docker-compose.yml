@@ -11,6 +11,7 @@ services:
       - 27017:27017
     networks:
       - app-network
+    command: --quiet
 
   mongo-express:
     image: mongo-express:latest
@@ -29,7 +30,7 @@ services:
       dockerfile: ./image_rest_api/dockerfile
     container_name: image_rest_api
     ports:
-      - "5000:5000"
+      - "6000:6000"
     networks:
       - app-network
     depends_on:

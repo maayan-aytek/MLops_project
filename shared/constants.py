@@ -1,6 +1,9 @@
 import json
 import pandas as pd
+from pymongo import MongoClient
 
+
+MONGO_CLIENT = MongoClient('mongodb://10.0.0.6:27017/')
 
 BOOKS_DF = pd.read_csv('./shared/books_data.csv')
 
