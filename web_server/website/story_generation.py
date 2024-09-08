@@ -230,9 +230,20 @@ def generate_story(room_code=None):
     current_participant = participants_order[current_turn % n_members]
 
     if current_participant == current_user.username:
+        db = current_app.config['MONGO_DB']
+        ages, interests, genders = [], [], []
+        user_names = rooms[room_code]['nickname_dict'].keys()
+        for username in user_names:
+            user = db.find_one({"username": username})
+            ages.append(user['age'])
+            interests.extend(user['interests'])
+            genders.append(user['gender'])
+
         answers = [details['answer'] for details in rooms[room_code]['history']]
         story_details = {
-                            "members":list(rooms[room_code]['nickname_dict'].keys()),
+                            "ages": ages,
+                            "interests": interests,
+                            "genders": genders,
                             "moral_of_the_story": answers[0],
                             "mode": answers[1],
                             "main_character_name": answers[2],

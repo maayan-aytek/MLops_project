@@ -76,6 +76,9 @@ def sign_up() -> Union[Response, str]:
         first_name = request.form.get('name')
         password1 = request.form.get('password1')
         password2 = request.form.get('password2')
+        gender = request.form.get('gender')
+        age = request.form.get('age')
+        interests = request.form.get('interests').strip().split(", ")
 
         message = ''
         is_password_strong, password_message = check_strong_password(password1)
@@ -84,26 +87,20 @@ def sign_up() -> Union[Response, str]:
         if user:
             flash('Username already exists.', category='error')
             message = 'Username already exists.'
-        elif len(username) < 1:
-            flash('Username must be not empty.', category='error')
-            message = 'Username must be not empty.'
-        elif len(first_name) < 1:
-            flash('First name must be not empty.', category='error')
-            message = 'First name must be not empty.'
         elif not is_password_strong:
             flash(password_message, category='error')
             message = password_message
         elif password1 != password2:
             flash('Passwords don\'t match.', category='error')
             message = 'Passwords don\'t match.'
-        elif len(password1) < 1:
-            flash('Password must be not empty.', category='error')
-            message = 'Password must be not empty.'
         else:
             new_user = {
                 "username": username,
                 "first_name": first_name,
-                "password": generate_password_hash(password1, method='pbkdf2:sha256')
+                "password": generate_password_hash(password1, method='pbkdf2:sha256'),
+                "gender": gender,
+                "age": age,
+                "interests": interests
             }
             db.insert_one(new_user)
             login_user(User(new_user), remember=True)

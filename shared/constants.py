@@ -1,12 +1,15 @@
 import json
+import pandas as pd
 
+
+BOOKS_DF = pd.read_csv('./shared/books_data.csv')
 
 QUESTIONS = [
     ("Moral of the story",[]),
     ("Main charcter name",[]),
     ("Secondery charcter name",[]),
     ("Story mode",["Classic", "Creative", "Innovative"]),
-    ("Story inspiration",["Ignored", "Where the Wild Things Are", "The Very Hungry Caterpillar", "Charlotte's Web", "Harry Potter and the Sorcerer's Stone", "Goodnight Moon"])
+    ("Story inspiration",['Ignored'] + list(BOOKS_DF['Name'].drop_duplicates().sort_values()))
 ]
 
 PARTICIPANTS_LOC = {1:'top',
