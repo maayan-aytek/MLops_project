@@ -7,3 +7,5 @@ flask-socketio==5.3.6
 Pillow==9.5.0
 pymongo==4.8.0
 flask-pymongo==2.3.0
+pandas==1.5.3
+numpy==1.22.0

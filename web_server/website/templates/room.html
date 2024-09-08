@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Rooms - CustomTales</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <ul class="nav-links">
+            <li><a href="{{ url_for('views.home_view') }}" onclick="leaveRoom()">Home</a></li>
+            <li><a href="{{ url_for('views.about_us') }}" onclick="leaveRoom()">About Us</a></li>
+            {% if current_user.is_authenticated %}
+                <li><a href="{{ url_for('views.choose_action') }}" onclick="leaveRoom()">Choose Activity</a></li>
+                <li><a href="{{ url_for('views.choose_action') }}" onclick="leaveRoom()">Leave Room</button></a></li>
+                <li><a href="{{ url_for('auth.logout') }}" onclick="leaveRoom()">Logout</a></li>
+            {% else %}
+                <li><a href="{{ url_for('auth.login') }}" onclick="leaveRoom()">Login</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <div class="question-box">
+        <h2>Current Question</h2>
+        <div id="current-question" class="question"></div>
+    </div>
+
+    <div class="game-container">
+        <div class="book-container">
+            <img src="{{ url_for('static', filename='book_image.png') }}" alt="Magical Book" class="book-image">
+        </div>
+
+        <!-- Define 5 participant positions -->
+        <div class="participant top-participant">
+            <h3 id="participant-top"></h3>
+            <div id="qa-top"></div>
+        </div>
+        <div class="participant left-participant">
+            <h3 id="participant-left"></h3>
+            <div id="qa-left"></div>
+        </div>
+        <div class="participant right-participant">
+            <h3 id="participant-right"></h3>
+            <div id="qa-right"></div>
+        </div>
+        <div class="participant bottom-left-participant">
+            <h3 id="participant-bottom-left"></h3>
+            <div id="qa-bottom-left"></div>
+        </div>
+        <div class="participant bottom-right-participant">
+            <h3 id="participant-bottom-right"></h3>
+            <div id="qa-bottom-right"></div>
+        </div>
+    </div>
+
+    <div class="participant-box">
+        <h3>It's <span id="current-participant"></span>'s turn to answer</h3>
+    </div>
+
+    <div class="answer-box"></div>
+
+    <div id="message-box" style="color: red;"></div>
+    <div id="generating-story-message" style="display: none;">
+        <h2>Generating the story...</h2>
+    </div>
+
+
+    <!-------------------------- Java Script -------------------------->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+        integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+        crossorigin="anonymous">
+</script>
+<script type="text/javascript">
+  const roomCode = "{{ room_code }}"; // Ensure room_code is passed to the template
+  var socketio = io();
+
+  const currentQuestion = document.getElementById("current-question");
+  const currentParticipant = document.getElementById("current-participant");
+  const messageBox = document.getElementById("message-box");
+  const generatingStoryMessage = document.getElementById("generating-story-message");
+
+
+    // Leave Room Logic
+    const leaveRoom = () => {
+    socketio.emit("disconnect_room");
+    };
+
+
+    socketio.on("AlertleaveRoom", (data) => {
+    alert(data.nickname + ' has left the room');
+    if (data.call_next_turn){
+        socketio.emit("next_turn", { room_code: data.room_code });
+    }
+    });
+
+
+  socketio.on("question", (data) => {
+    currentQuestion.innerText = data.question;
+    currentParticipant.innerText = data.is_participant_turn ? "your" : data.current_participant_name;
+
+    const answerBox = document.querySelector('.answer-box');
+
+    // Remove previous input field (if any)
+    answerBox.innerHTML = '';
+
+    if (data.is_participant_turn) {
+        answerBox.classList.remove('hidden');
+        let inputElement;
+
+        // Check if options are available, and create select-box if they are
+        if (data.options && data.options.length > 0) {
+            inputElement = document.createElement('select');
+            inputElement.classList.add('select-input');
+            inputElement.disabled = false;
+
+            // Add options to select
+            data.options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.textContent = option;
+                inputElement.appendChild(optionElement);
+            });
+        } else {
+            // If no options, create a textarea
+            inputElement = document.createElement('textarea');
+            inputElement.classList.add('text-input');
+            inputElement.placeholder = "Type your answer here...";
+            inputElement.rows = 4;
+            inputElement.disabled = false;
+        }
+
+        answerBox.appendChild(inputElement);
+
+        // Create submit button
+        const submitButton = document.createElement('button');
+        submitButton.classList.add('submit-btn');
+        submitButton.innerText = 'Submit Answer';
+        submitButton.disabled = false;
+        submitButton.addEventListener('click', () => sendAnswer(inputElement));
+
+        answerBox.appendChild(submitButton);
+    } else {
+        answerBox.classList.add('hidden');
+    }
+  });
+
+const sendAnswer = (inputElement, answerBox) => {
+    const answer = inputElement.tagName === 'TEXTAREA' ? inputElement.value : inputElement.options[inputElement.selectedIndex].value;
+    const question = currentQuestion.innerText;
+
+    if (answer === "" || question === "") return;
+
+    // Send the answer to the server
+    socketio.emit("answer", { room_code: roomCode, question: question, answer: answer });
+
+    // Clear the input field after submission
+    inputElement.value = "";
+
+    // Hide the answer box (input and submit button) after the answer is submitted
+    answerBox.style.display = 'none';
+};
+
+  socketio.on("finish_turn", (data) => {
+    if (data.is_last_turn) {
+        generatingStoryMessage.style.display = 'block';
+
+        // Emit event to generate the story
+        socketio.emit("generate_story", { room_code: data.room_code });
+
+        // Hide all other elements
+        document.querySelector('.participant-sections').style.display = 'none';
+        document.querySelector('.question-box').style.display = 'none';
+        document.querySelector('.participant-box').style.display = 'none';
+        document.querySelector('.answer-box').style.display = 'none';
+    } else {
+        socketio.emit("next_turn", { room_code: data.room_code });
+    }
+  });
+
+  socketio.on("unauthorized", (data) => {
+    messageBox.innerText = data.message;
+  });
+
+socketio.on("update_participant_data", (data) => {
+    const positions = ["top", "left", "bottom-left", "bottom-right", "right"];
+    
+    // Clear existing content
+    positions.forEach(position => {
+        const participantNameElem = document.getElementById(`participant-${position}`);
+        participantNameElem.innerText = '';
+        participantNameElem.parentElement.style.display = 'block';
+
+        const qaContainer = document.getElementById(`qa-${position}`);
+        qaContainer.innerHTML = '';
+    });
+
+    // Process the history data
+    data.forEach(roundDetails => {
+        const position = positions[roundDetails.current_turn % positions.length];
+        
+        // Show and set participant's name in the correct position
+        const participantNameElem = document.getElementById(`participant-${position}`);
+        participantNameElem.innerText = roundDetails.current_participant_name;
+        participantNameElem.parentElement.style.display = 'block';
+
+        // Get the question and answer container for this participant
+        const qaContainer = document.getElementById(`qa-${position}`);
+        qaContainer.innerHTML = '';
+
+        const qaPairDiv = document.createElement('div');
+        qaPairDiv.style.textAlign = 'center';
+
+        const questionElem = document.createElement('p');
+        questionElem.innerHTML = `<strong>${roundDetails.question}</strong>`;
+        questionElem.style.textAlign = 'center';
+        qaPairDiv.appendChild(questionElem);
+
+        const answerElem = document.createElement('p');
+        answerElem.innerText = `${roundDetails.answer}`;
+        answerElem.style.textAlign = 'center';
+        qaPairDiv.appendChild(answerElem);
+
+        qaContainer.appendChild(qaPairDiv);
+    });
+});
+
+
+  socketio.on("story", (data) => {
+    generatingStoryMessage.style.display = 'none';
+
+    // Get the book-container where the image is located
+    const bookContainer = document.querySelector('.book-container');
+
+    // Remove the existing image (or hide it)
+    const bookImage = bookContainer.querySelector('img');
+    if (bookImage) {
+        bookImage.style.display = 'none'; // Hide the image
+    }
+
+    // Hide the current question box
+    document.querySelector('.question-box').style.display = 'none';
+
+    // Create a new container for the story with a background
+    const storyElement = document.createElement('div');
+    storyElement.className = 'story-box';
+    storyElement.innerHTML = `
+        <div class="story-container">
+            <h2>${data.title}</h2>
+            <p>${data.story}</p>
+        </div>
+    `;
+
+    // Clear any margins on the game container for consistent spacing
+    const gameContainer = document.querySelector('.game-container');
+    gameContainer.style.marginTop = '100px';
+
+    const leftContainer = document.querySelector('.left-participant');
+    leftContainer.style.marginLeft  = '100px';
+    leftContainer.style.marginTop  = '-100px';
+
+    const rightContainer = document.querySelector('.right-participant');
+    rightContainer.style.marginRight  = '100px';
+    rightContainer.style.marginTop  = '-100px';
+
+    const bottomLeftContainer = document.querySelector('.bottom-left-participant');
+    bottomLeftContainer.style.marginLeft  = '100px';
+    bottomLeftContainer.style.marginTop  = '-100px';
+
+    const bottomRightContainer = document.querySelector('.bottom-right-participant');
+    bottomRightContainer.style.marginRight  = '100px';
+    bottomRightContainer.style.marginTop  = '-100px';
+
+    // Center the story on the page
+    storyElement.style.margin = 'auto';
+    storyElement.style.width = '80%'; // Adjust width for responsiveness
+    storyElement.style.padding = '20px'; // Add padding for readability
+
+    // Append the story element to the book-container
+    bookContainer.appendChild(storyElement);
+
+    // Hide the answer box and participant's turn message
+    document.querySelector('.answer-box').style.display = 'none';
+    document.querySelector('.participant-box').style.display = 'none';
+});
+
+  socketio.emit("join", { room_code: roomCode });
+</script>
+</body>
+</html>

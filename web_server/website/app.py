@@ -4,18 +4,20 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 import time
 from flask import Flask
 from typing import Dict, Any
-from flask_pymongo import PyMongo
-from pymongo import MongoClient
 from flask_socketio import SocketIO
+from shared.constants import MONGO_CLIENT
 from flask_login import LoginManager, current_user
+
 socketio = SocketIO()
 
 def create_app() -> Flask:
     from .auth import auth
-    from .views import views
     from .models import User
-    from .database import init_db
+    from .views import views
     from shared.utils import create_json_response
+    from .story_generation import story_generation
+    from .image_classification import image_classification
+    
 
     """
     Create and configure the Flask application.
@@ -30,16 +32,18 @@ def create_app() -> Flask:
     app.config['FAIL'] = 0
     app.config['START_TIME'] = time.time()
     app.config['image_dict'] = {}
-    client = MongoClient('mongodb://10.0.0.5:27017/')
-    db = client['customtales']
+    app.config['rooms'] = {}
+    
+    db = MONGO_CLIENT['customtales']
     users_collection = db['users']
-    app.config['MONGO_CLIENT'] = client
     app.config['MONGO_DB'] = users_collection
     
     socketio.init_app(app)  
 
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
+    app.register_blueprint(story_generation, url_prefix='/')
+    app.register_blueprint(image_classification, url_prefix='/')
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'

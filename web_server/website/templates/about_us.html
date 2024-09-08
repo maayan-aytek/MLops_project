@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Custom Tales</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-logo">
+        </div>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('views.home_view') }}">Home</a></li>
+            <li><a href="{{ url_for('views.about_us') }}">About Us</a></li>
+            <li><a href="{{ url_for('auth.sign_up') }}">Sign Up</a></li>
+            {% if current_user.is_authenticated %}
+                <li><a href="{{ url_for('views.choose_action') }}">Choose Activity</a></li>
+                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+            {% else %}
+                <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    <div class="container">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="CustomTales Logo" class="logo">
+        <h2>Welcome to Custom Tales! An interactive storytelling platform, where creativity meets personalization.</h2>
+        <p>
+            Our app leverages the power of artificial intelligence to craft customized stories tailored to your child's unique needs.
+        </p>
+        <p>
+            To get started, simply provide some basic information about your child to ensure that our stories are perfectly suited to their individuality. Once you've provided this information, our system works its magic to generate a story specifically designed to captivate your child's imagination. You'll have the flexibility to choose various story elements to suit your preferences.
+        </p>
+        <p>
+            Furthermore, we understand the importance of finding the perfect children's books to nurture your child's imagination. That's why our system recommends similar children's books that align with your child's preferences, helping you make informed choices when expanding their library.
+        </p>
+        <p>
+            In addition to personalized storytelling and insightful book recommendations, we aim to make bedtime reading more engaging, enjoyable, and memorable for families everywhere. Join us on this journey to spark imagination, foster a love of reading, and create cherished bedtime memories with your little ones.
+        </p>
+        <a href="{{ url_for('views.home_view') }}" class="back-button">Back</a>
+    </div>
+</body>
+</html>

@@ -1,31 +1,23 @@
 import os 
-from io import BytesIO
-import json
-import time
-import PIL.Image
 import sys
-import concurrent.futures
+import time
 import random
+import PIL.Image
+from io import BytesIO
+import concurrent.futures
+from typing import Union, Optional
+from flask import Blueprint, request, redirect, url_for, Response, current_app
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from shared.utils import *
-from typing import Union, Optional
-import google.generativeai as genai
-from flask_login import login_required, current_user
-from flask import Blueprint, render_template, request, redirect, url_for, Response, current_app
+from shared.constants import MONGO_CLIENT
 
+model = get_LLM_model()
 
-# Load API key from secrets file
-with open(os.path.join('shared', 'secrets.json'), 'r') as file:
-    secrets = json.load(file)
-    API_KEY = secrets['API_KEY']
+# Define Blueprint
+image_api = Blueprint('image_api', __name__)
 
-# Configuring Gemini API 
-genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
-
-
-# Define Blueprint for views
-views = Blueprint('views', __name__)
+db = MONGO_CLIENT['image_rest_api']
+monitor_collection = db['monitor_health']
 
 def classify_image(img: str) -> Optional[str]:
     """
@@ -36,14 +28,19 @@ def classify_image(img: str) -> Optional[str]:
     Returns:
         Optional[str]: The classification result, or None if classification fails.
     """
-    response = model.generate_content(["What is the main object in the photo? answer just in one word- the main object", img], stream=True)
-    response.resolve()
-    classification = response.text
-    if classification:
-        return {'matches': [{'name': classification, 'score': 0.9}]}
-    return None
+    try:
+        response = model.generate_content(["What is the main object in the photo? answer just in one word- the main object", img], stream=True)
+        response.resolve()
+        classification = response.text
+        if classification:
+            return {'matches': [{'name': classification, 'score': 0.9}]}
+        else:
+            return None
+    except:
+        return None
 
-@views.route('/', methods=['GET'])
+
+@image_api.route('/', methods=['GET'])
 def home() -> Response:
     """
     Redirect to the login page.
@@ -54,20 +51,16 @@ def home() -> Response:
     return redirect(url_for('views.upload_image'))
 
 
-@views.route('/status', methods=['GET'])
+@image_api.route('/status', methods=['GET'])
 def status():
-    running = 0
-    for process in current_app.config['process_dict'].values():
-        if not process.done():
-            running += 1
-
+    montor_dict = monitor_collection.find_one()
     data = {
-        'uptime': time.time() - current_app.config['START_TIME'],
+        'uptime': time.time() - montor_dict['start_time'],
         'processed': {
-            'success': current_app.config['SUCCESS'],
-            'fail': current_app.config['FAIL'],     
-            'running': running,
-            'queued': 0   
+            'success': montor_dict['success'],
+            'fail': montor_dict['fail'],     
+            'running': montor_dict['running'],
+            'queued': 0 
         },
         'health': 'ok',
         'api_version': 0.3,
@@ -75,7 +68,8 @@ def status():
     return create_json_response({'status': data}, 200)
 
 
-@views.route('/upload_image', methods=['POST'])
+@image_api.route('/upload_image', methods=['POST'])
+@monitor_status(monitor_collection)
 def upload_image() -> Union[Response, str]:
     """
     Handle sync image upload and classification.
@@ -108,7 +102,9 @@ def execute_async_upload_image(image_data):
     classification_result = classify_image(image)
     return classification_result
 
-@views.route('/async_upload', methods=['POST'])
+
+@image_api.route('/async_upload', methods=['POST'])
+@monitor_status(monitor_collection)
 def async_upload() -> Union[Response, str]:
     """
     Handle async image upload and classification.
@@ -134,8 +130,7 @@ def async_upload() -> Union[Response, str]:
     return create_json_response({'request_id': request_id}, 202)
 
 
-
-@views.route('/result/<request_id>', methods=['GET'])
+@image_api.route('/result/<request_id>', methods=['GET'])
 def get_result_with_id(request_id) -> Response:
     """
     Retrieve the result for a specific request ID.

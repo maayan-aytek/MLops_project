@@ -1,23 +1,70 @@
-version: "3.8"  # Specifies the version of Docker Compose
+version: "3.8"
 
 services:
   mongodb007:
-    image: mongo:latest  # Uses the official MongoDB image from Docker Hub
+    image: mongo:latest
     container_name: mongodb
     restart: unless-stopped
     volumes:
-      - mongodb:/data/db  # Persists MongoDB data between container restarts
+      - mongodb:/data/db
     ports:
-      - 27017:27017  # Maps port 27017 on the host to port 27017 on the container
+      - 27017:27017
+    networks:
+      - app-network
+    command: --quiet
 
   mongo-express:
-    image: mongo-express:latest  # Uses the Mongo Express image to provide a web-based MongoDB admin interface
+    image: mongo-express:latest
     container_name: mongo-express
     restart: unless-stopped
     ports:
-      - 8081:8081  # Maps port 8081 on the host to port 8081 on the container
-    environment: 
-      ME_CONFIG_MONGODB_URL: mongodb://mongodb007:27017  # Update URL to use the correct service name
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb007:27017
+    networks:
+      - app-network
+
+  image_rest_api:
+    build:
+      context: .
+      dockerfile: ./image_rest_api/dockerfile
+    container_name: image_rest_api
+    ports:
+      - "6000:6000"
+    networks:
+      - app-network
+    depends_on:
+      - mongodb007
+
+  story_api:
+    build:
+      context: .
+      dockerfile: ./story_api/dockerfile
+    container_name: story_api
+    ports:
+      - "5050:5050"
+    networks:
+      - app-network
+    depends_on:
+      - mongodb007
+
+  web_server:
+    build:
+      context: .
+      dockerfile: ./web_server/dockerfile
+    container_name: web_server
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+    depends_on:
+      - image_rest_api
+      - story_api
 
 volumes:
-  mongodb:  # Defines the named volume 'mongodb'
+  mongodb:
+
+networks:
+  app-network:
+    driver: bridge
+

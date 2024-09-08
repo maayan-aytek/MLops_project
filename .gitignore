@@ -1,0 +1,5 @@
+# Ignore all .vscode settings
+.vscode/
+
+# Ignore Python cache directories and files
+*.pyc
