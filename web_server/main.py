@@ -10,4 +10,4 @@ if __name__ == '__main__':
         IP = secrets['IP']
         WEB_PORT = secrets['WEB_SERVER_PORT']
 
-    socketio.run(app, debug=True, host=IP, port=WEB_PORT, use_reloader=False)
+    socketio.run(app, debug=True, host=IP, port=WEB_PORT, use_reloader=False, allow_unsafe_werkzeug=True)

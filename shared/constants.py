@@ -19,8 +19,7 @@ with open('./shared/secrets.json', 'r') as file:
     secrets = json.load(file)
     API_KEY = secrets['API_KEY']
     IP = secrets['IP']
-    # IP = '127.0.0.1'
     IMAGE_API_PORT = secrets['IMAGE_API_PORT']
     STORY_API_PORT = secrets['STORY_API_PORT']
-    IMAGE_API_BASE_URL = f"http://{IP}:{IMAGE_API_PORT}/"
-    STORY_API_BASE_URL = f"http://{IP}:{STORY_API_PORT}/"
+    IMAGE_API_BASE_URL = f"http://image_rest_api:{IMAGE_API_PORT}/"
+    STORY_API_BASE_URL = f"http://story_api:{STORY_API_PORT}/"
