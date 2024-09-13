@@ -1,38 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Choose Action - CustomTales</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <nav class="navbar">
-        <div class="nav-logo">
-        </div>
-        <ul class="nav-links">
-            <li><a href="{{ url_for('views.home_view') }}">Home</a></li>
-            <li><a href="{{ url_for('views.about_us') }}">About Us</a></li>
-            <li><a href="{{ url_for('auth.sign_up') }}">Sign Up</a></li>
-            {% if current_user.is_authenticated %}
-                <li><a href="{{ url_for('views.choose_action') }}">Choose Activity</a></li>
-                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
-            {% else %}
-                <li><a href="{{ url_for('auth.login') }}">Login</a></li>
-            {% endif %}
-        </ul>
-    </nav>
-    <div class="container">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="CustomTales Logo" class="logo">
-        <h1>What would you like to do?</h1>
-        <div class="action-buttons">
-            <a href="{{ url_for('image_classification.upload_image') }}" class="action-btn">
-                <img src="{{ url_for('static', filename='upload_image.png') }}" alt="Upload Image">
-            </a>
-            <a href="{{ url_for('story_generation.handle_room_request') }}" class="action-btn">
-                <img src="{{ url_for('static', filename='create_room_story.png') }}" alt="Create Room for Story">
-            </a>
-        </div>
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="CustomTales Logo" class="logo">
+    <h1>What would you like to do?</h1>
+    <div class="action-buttons">
+        <a href="{{ url_for('image_classification.upload_image') }}" class="action-btn">
+            <img src="{{ url_for('static', filename='upload_image.png') }}" alt="Upload Image">
+        </a>
+        <a href="{{ url_for('story_generation.handle_room_request') }}" class="action-btn">
+            <img src="{{ url_for('static', filename='create_room_story.png') }}" alt="Create Room for Story">
+        </a>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

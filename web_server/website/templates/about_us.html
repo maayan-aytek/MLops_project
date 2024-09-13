@@ -1,35 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Us - Custom Tales</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <nav class="navbar">
-        <div class="nav-logo">
-        </div>
-        <ul class="nav-links">
-            <li><a href="{{ url_for('views.home_view') }}">Home</a></li>
-            <li><a href="{{ url_for('views.about_us') }}">About Us</a></li>
-            <li><a href="{{ url_for('auth.sign_up') }}">Sign Up</a></li>
-            {% if current_user.is_authenticated %}
-                <li><a href="{{ url_for('views.choose_action') }}">Choose Activity</a></li>
-                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
-            {% else %}
-                <li><a href="{{ url_for('auth.login') }}">Login</a></li>
-            {% endif %}
-        </ul>
-    </nav>
-    <div class="container">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="CustomTales Logo" class="logo">
-        <h1>Welcome to Custom Tales!</h1>
-        <h3>An interactive storytelling platform, where creativity meets personalization.</h3>
-        <p>Our app leverages the power of artificial intelligence to craft customized stories tailored to your child's unique needs. To get started, simply provide some basic information about your child to ensure that our stories are perfectly suited to their individuality. Once you've provided this information, our system works its magic to generate a story specifically designed to captivate your child's imagination. You'll have the flexibility to choose various story elements to suit your preferences. </p>
-        <p>In addition to personalized storytelling, Custom Tales offers a collaborative experience where children can join virtual rooms to create shared stories with their friends. Each child takes turns contributing to the story, adding characters, plot twists, and their unique ideas to craft a captivating tale together. </p> 
-        <p>Whether it's creating personalized stories or embarking on a collaborative storytelling journey, Custom Tales provides a fun, engaging platform to nurture imagination and creativity in every child. </p>
-        <a href="{{ url_for('views.home_view') }}" class="back-button">Back</a>
-    </div>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="CustomTales Logo" class="logo">
+    <h1>Welcome to Custom Tales!</h1>
+    <h3>An interactive storytelling platform, where creativity meets personalization.</h3>
+    <p>Our app leverages the power of artificial intelligence to craft customized stories tailored to your child's unique needs. To get started, simply provide some basic information about your child to ensure that our stories are perfectly suited to their individuality. Once you've provided this information, our system works its magic to generate a story specifically designed to captivate your child's imagination. You'll have the flexibility to choose various story elements to suit your preferences.</p>
+    <p>In addition to personalized storytelling, Custom Tales offers a collaborative experience where children can join virtual rooms to create shared stories with their friends. Each child takes turns contributing to the story, adding characters, plot twists, and their unique ideas to craft a captivating tale together.</p>
+    <p>Whether it's creating personalized stories or embarking on a collaborative storytelling journey, Custom Tales provides a fun, engaging platform to nurture imagination and creativity in every child.</p>
+    {% if current_user.is_authenticated %}
+        <a href="{{ url_for('views.choose_action') }}" class="back-button">Home</a>
+    {% else %}
+        <a href="{{ url_for('views.home') }}" class="back-button">Home</a>
+    {% endif %}
+
+</div>
+{% endblock %}

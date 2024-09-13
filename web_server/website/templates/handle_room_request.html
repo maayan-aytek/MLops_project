@@ -1,95 +1,74 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Rooms - CustomTales</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <nav class="navbar">
-        <ul class="nav-links">
-            <li><a href="{{ url_for('views.home_view') }}">Home</a></li>
-            <li><a href="{{ url_for('views.about_us') }}">About Us</a></li>
-            <li><a href="{{ url_for('auth.sign_up') }}">Sign Up</a></li>
-            {% if current_user.is_authenticated %}
-                <li><a href="{{ url_for('views.choose_action') }}">Choose Activity</a></li>
-                <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
-            {% else %}
-                <li><a href="{{ url_for('auth.login') }}">Login</a></li>
-            {% endif %}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; padding: 40px 100px;">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="CustomTales Logo" class="logo">
+    <h1>Manage Rooms</h1>
+
+    <!-- Create/Join Tabs -->
+    <div class="tab-container">
+        <ul class="tabs">
+            <li class="tab-link active" data-tab="create" style="text-align: center;">Create a Room</li>
+            <li class="tab-link" data-tab="join" style="text-align: center;">Join a Room</li>
         </ul>
-    </nav>
 
-    <div class="container" style="max-width: 800px; padding: 40px 100px;">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="CustomTales Logo" class="logo">
-        <h1>Manage Rooms</h1>
+        <!-- Create a Room Tab -->
+        <div id="create" class="tab-content active">
+            <form method="post" action="{{ url_for('story_generation.handle_room_request') }}">
+                <h3>Create a Chat Room</h3>
+                <div>
+                    <label for="nickname">Nickname:</label>
+                    <input type="text" id="nickname" name="nickname" placeholder="Pick a Nickname!" value="{{ nickname }}">
+                </div>
+                <div>
+                    <label for="participants">Select Number of Participants:</label>
+                    <select name="participants" id="participants">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <input type="hidden" name="action" value="create">
+                <button type="submit" class="create-btn">Create Room</button>
+                {% if error %}
+                    <ul><li>{{ error }}</li></ul>
+                {% endif %}
+            </form>
+        </div>
 
-        <!-- Create/Join Tabs -->
-        <div class="tab-container">
-            <ul class="tabs">
-                <li class="tab-link active" data-tab="create" style="text-align: center;">Create a Room</li>
-                <li class="tab-link" data-tab="join" style="text-align: center;">Join a Room</li>
-            </ul>
-
-            <!-- Create a Room Tab -->
-            <div id="create" class="tab-content active">
-                <form method="post" action="{{ url_for('story_generation.handle_room_request') }}">
-                    <h3>Create a Chat Room</h3>
-                    <div>
-                        <label for="nickname">Nickname:</label>
-                        <input type="text" id="nickname" name="nickname" placeholder="Pick a Nickname!" value="{{ nickname }}">
-                    </div>
-                    <div>
-                        <label for="participants">Select Number of Participants:</label>
-                        <select name="participants" id="participants">
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5">5</option>
-                        </select>
-                    </div>
-                    <input type="hidden" name="action" value="create">
-                    <button type="submit" class="create-btn">Create Room</button>
-                    {% if error %}
-                        <ul><li>{{ error }}</li></ul>
-                    {% endif %}
-                </form>
-            </div>
-
-            <!-- Join a Room Tab -->
-            <div id="join" class="tab-content">
-                <form method="post" action="{{ url_for('story_generation.handle_room_request') }}">
-                    <h3>Join a Chat Room</h3>
-                    <div>
-                        <label for="nickname">Nickname:</label>
-                        <input type="text" id="nickname" name="nickname" placeholder="Pick a Nickname!" value="{{ nickname }}">
-                    </div>
-                    <div>
-                        <label for="code">Room Code:</label>
-                        <input type="text" id="code" name="code" placeholder="Enter the room code" value="{{ code }}">
-                    </div>
-                    <input type="hidden" name="action" value="join">
-                    <button type="submit" class="join-btn">Join Room</button>
-                    {% if error %}
-                        <ul><li>{{ error }}</li></ul>
-                    {% endif %}
-                </form>
-            </div>
+        <!-- Join a Room Tab -->
+        <div id="join" class="tab-content">
+            <form method="post" action="{{ url_for('story_generation.handle_room_request') }}">
+                <h3>Join a Chat Room</h3>
+                <div>
+                    <label for="nickname">Nickname:</label>
+                    <input type="text" id="nickname" name="nickname" placeholder="Pick a Nickname!" value="{{ nickname }}">
+                </div>
+                <div>
+                    <label for="code">Room Code:</label>
+                    <input type="text" id="code" name="code" placeholder="Enter the room code" value="{{ code }}">
+                </div>
+                <input type="hidden" name="action" value="join">
+                <button type="submit" class="join-btn">Join Room</button>
+                {% if error %}
+                    <ul><li>{{ error }}</li></ul>
+                {% endif %}
+            </form>
         </div>
     </div>
+</div>
 
-    <script>
-        document.querySelectorAll('.tab-link').forEach(tab => {
-            tab.addEventListener('click', function () {
-                const targetTab = this.getAttribute('data-tab');
-                document.querySelectorAll('.tab-link').forEach(item => item.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-                this.classList.add('active');
-                document.getElementById(targetTab).classList.add('active');
-            });
+<script>
+    document.querySelectorAll('.tab-link').forEach(tab => {
+        tab.addEventListener('click', function () {
+            const targetTab = this.getAttribute('data-tab');
+            document.querySelectorAll('.tab-link').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById(targetTab).classList.add('active');
         });
-    </script>
-</body>
-</html>
+    });
+</script>
+{% endblock %}

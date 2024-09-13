@@ -19,7 +19,7 @@ def home() -> Response:
 
 @views.route('/home', methods=['GET'])
 def home_view():
-    return render_template('base.html', user=current_user)
+    return render_template('home.html', user=current_user)
 
 
 @views.route('/about_us', methods=['GET'])

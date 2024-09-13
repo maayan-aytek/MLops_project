@@ -51,7 +51,7 @@ def logout() -> Response:
         Response: A redirect response to the login page.
     """
     logout_user()
-    return redirect(url_for('auth.login'))
+    return render_template('home.html')
 
 
 def check_strong_password(password):

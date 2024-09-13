@@ -1,71 +1,50 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Rooms - CustomTales</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <nav class="navbar">
-        <ul class="nav-links">
-            <li><a href="{{ url_for('views.home_view') }}" onclick="leaveRoom()">Home</a></li>
-            <li><a href="{{ url_for('views.about_us') }}" onclick="leaveRoom()">About Us</a></li>
-            {% if current_user.is_authenticated %}
-                <li><a href="{{ url_for('views.choose_action') }}" onclick="leaveRoom()">Choose Activity</a></li>
-                <li><a href="{{ url_for('views.choose_action') }}" onclick="leaveRoom()">Leave Room</button></a></li>
-                <li><a href="{{ url_for('auth.logout') }}" onclick="leaveRoom()">Logout</a></li>
-            {% else %}
-                <li><a href="{{ url_for('auth.login') }}" onclick="leaveRoom()">Login</a></li>
-            {% endif %}
-        </ul>
-    </nav>
+{% extends "base.html" %}
 
-    <div class="question-box">
-        <h2>Current Question</h2>
-        <div id="current-question" class="question"></div>
+{% block content %}
+<div class="question-box">
+    <h2>Current Question</h2>
+    <div id="current-question" class="question"></div>
+</div>
+
+<div class="game-container">
+    <div class="book-container">
+        <img src="{{ url_for('static', filename='book_image.png') }}" alt="Magical Book" id="glowing-book" class="book-image">
     </div>
 
-    <div class="game-container">
-        <div class="book-container">
-            <img src="{{ url_for('static', filename='book_image.png') }}" alt="Magical Book" id="glowing-book" class="book-image">
-        </div>
-
-        <div id="generating-story-message" style="display: none;">
-            <h2>Generating the story...</h2>
-        </div>
-
-        <!-- Define 5 participant positions -->
-        <div class="participant top-participant">
-            <h3 id="participant-top"></h3>
-            <div id="qa-top"></div>
-        </div>
-        <div class="participant left-participant">
-            <h3 id="participant-left"></h3>
-            <div id="qa-left"></div>
-        </div>
-        <div class="participant right-participant">
-            <h3 id="participant-right"></h3>
-            <div id="qa-right"></div>
-        </div>
-        <div class="participant bottom-left-participant">
-            <h3 id="participant-bottom-left"></h3>
-            <div id="qa-bottom-left"></div>
-        </div>
-        <div class="participant bottom-right-participant">
-            <h3 id="participant-bottom-right"></h3>
-            <div id="qa-bottom-right"></div>
-        </div>
+    <div id="generating-story-message" style="display: none;">
+        <h2>Generating the story...</h2>
     </div>
 
-    <div class="participant-box">
-        <h3>It's <span id="current-participant"></span>'s turn to answer</h3>
+    <!-- Define 5 participant positions -->
+    <div class="participant top-participant">
+        <h3 id="participant-top"></h3>
+        <div id="qa-top"></div>
     </div>
+    <div class="participant left-participant">
+        <h3 id="participant-left"></h3>
+        <div id="qa-left"></div>
+    </div>
+    <div class="participant right-participant">
+        <h3 id="participant-right"></h3>
+        <div id="qa-right"></div>
+    </div>
+    <div class="participant bottom-left-participant">
+        <h3 id="participant-bottom-left"></h3>
+        <div id="qa-bottom-left"></div>
+    </div>
+    <div class="participant bottom-right-participant">
+        <h3 id="participant-bottom-right"></h3>
+        <div id="qa-bottom-right"></div>
+    </div>
+</div>
 
-    <div class="answer-box"></div>
+<div class="participant-box">
+    <h3>It's <span id="current-participant"></span>'s turn to answer</h3>
+</div>
 
-    <div id="message-box" style="color: red;"></div>
+<div class="answer-box"></div>
 
+<div id="message-box" style="color: red;"></div>
 
     <!-------------------------- Java Script -------------------------->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
@@ -292,5 +271,4 @@ socketio.on("update_participant_data", (data) => {
 
   socketio.emit("join", { room_code: roomCode });
 </script>
-</body>
-</html>
+{% endblock %}

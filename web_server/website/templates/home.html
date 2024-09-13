@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <!-- Remove the navigation bar for the homepage -->
+    <style>
+        nav.navbar {
+            display: none;
+        }
+    </style>
+
+    <div class="container">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="CustomTales Logo" class="logo">
+        <h1>Welcome to CustomTales!</h1>
+        <a href="{{ url_for('views.about_us') }}" class="btn">About Us</a>
+        <br>
+        <a href="{{ url_for('auth.login') }}" class="btn">Login</a>
+        <br>
+        <a href="{{ url_for('auth.sign_up') }}" class="btn">Sign Up</a>
+    </div>
+{% endblock %}

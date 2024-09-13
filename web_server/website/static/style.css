@@ -15,10 +15,11 @@ body {
 }
 
 .navbar {
+    display: flex;
+    justify-content: space-between; /* Space between links and the username */
     width: 100%;
     background-color: rgba(0, 0, 0, 0.85);
     display: flex;
-    justify-content: flex-start;
     align-items: center;
     padding: 10px 20px;
     position: fixed;
@@ -61,6 +62,13 @@ body {
     color: #ca4fff;
     background-color: rgba(255, 255, 255, 0.1);
     border-radius: 5px;
+}
+
+.navbar-user {
+    margin-right: 40px; /* Adjust margin as necessary */
+    font-size: 1.2em;
+    color: white;
+    font-weight: bold;
 }
 
 .container {
