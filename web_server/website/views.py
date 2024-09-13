@@ -17,22 +17,6 @@ def home() -> Response:
     return redirect(url_for('views.home_view'))
 
 
-@views.route('/status', methods=['GET'])
-def status():
-    data = {
-        'uptime': time.time() - current_app.config['START_TIME'],
-        'processed': {
-            'success': current_app.config['SUCCESS'],
-            'fail': current_app.config['FAIL'],
-            'running': 0,
-            'queued': 0
-        },
-        'health': 'ok',
-        'api_version': 0.21,
-    }
-    return create_json_response({'status': data}, 200)
-
-
 @views.route('/home', methods=['GET'])
 def home_view():
     return render_template('base.html', user=current_user)

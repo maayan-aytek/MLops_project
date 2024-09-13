@@ -18,6 +18,7 @@ image_api = Blueprint('image_api', __name__)
 
 db = MONGO_CLIENT['image_rest_api']
 monitor_collection = db['monitor_health']
+request_collection = db['request_track']
 
 def classify_image(img: str) -> Optional[str]:
     """
@@ -28,6 +29,7 @@ def classify_image(img: str) -> Optional[str]:
     Returns:
         Optional[str]: The classification result, or None if classification fails.
     """
+    print('in classify_image')
     try:
         response = model.generate_content(["What is the main object in the photo? answer just in one word- the main object", img], stream=True)
         response.resolve()
@@ -35,8 +37,10 @@ def classify_image(img: str) -> Optional[str]:
         if classification:
             return {'matches': [{'name': classification, 'score': 0.9}]}
         else:
+            print('else')
             return None
-    except:
+    except Exception as e:
+        print(e)
         return None
 
 
@@ -103,6 +107,23 @@ def execute_async_upload_image(image_data):
     return classification_result
 
 
+def save_result_to_db(future, request_id):
+    if future.exception() is not None:
+        request_collection.update_one(
+        {'request_id': str(request_id)},
+        {'$set': {'status': 'failed'}},
+        )
+    else:
+        try:
+            result = future.result()
+            request_collection.update_one(
+                {'request_id': str(request_id)},
+                {'$set': {'status': 'completed', 'classification_result': result}},
+            )
+        except Exception as e:
+            print(f"Error processing request {request_id}: {e}")
+
+
 @image_api.route('/async_upload', methods=['POST'])
 @monitor_status(monitor_collection)
 def async_upload() -> Union[Response, str]:
@@ -125,7 +146,10 @@ def async_upload() -> Union[Response, str]:
     request_id = random.randint(10000, 1000000)
     with concurrent.futures.ThreadPoolExecutor() as executor:
         future = executor.submit(execute_async_upload_image, image_data)
-        current_app.config['process_dict'][str(request_id)] = future
+        request_collection.insert_one(
+            {'request_id': str(request_id), 'status': 'pending'},
+        )
+        future.add_done_callback(lambda fut: save_result_to_db(fut, request_id))
         time.sleep(1)
     return create_json_response({'request_id': request_id}, 202)
 
@@ -134,27 +158,32 @@ def async_upload() -> Union[Response, str]:
 def get_result_with_id(request_id) -> Response:
     """
     Retrieve the result for a specific request ID.
-    This view returns a 404 error if the specified request ID does not exist (always the case in our app since it is sync)
+    This view returns a 404 error if the specified request ID does not exist.
+    
     Args:
         request_id (str): The ID of the request to retrieve the result for.
     Returns:
-        Response: A JSON response 
+        Response: A JSON response with the classification result or the current status.
     """
-    if request_id not in current_app.config['process_dict']:
+    # Check if the request_id exists in the database
+    request_data = request_collection.find_one({'request_id': request_id})
+    
+    if not request_data:
         return create_json_response({'error': {'code': 404, 'message': 'ID not found'}}, 404)
-    future = current_app.config['process_dict'][request_id]
-    if future.done():
-        if future.exception() is not None:
-            return create_json_response({'error':'got an unhandle exception'}, 400)
-        else:
-            classification_result = future.result()
-            if classification_result is not None:
-                create_json_response(classification_result, 200)
-                classification_result.update({'status': "completed"})
-            else:
-                classification_result = {'error': {'code': 401, 'message': 'Classification failed'}}
-                create_json_response(classification_result, 401)
-                classification_result.update({'status': "failed"})
-            return create_json_response(classification_result, 200)
+
+    status = request_data.get('status')
+
+    if status == 'pending':
+        return create_json_response({'status': 'running'}, 200)
+    
+    elif status == 'completed':
+        classification_result = request_data['classification_result']
+        classification_result.update({'status': "completed"})
+        return create_json_response(classification_result, 200)
+
+    elif status == 'failed':
+        return create_json_response({'error': {'code': 401, 'message': 'Classification failed'}, 'status': 'failed'}, 200)
+
     else:
-        return create_json_response({'status': "running"}, 200)
+        return create_json_response({'error': 'Unknown error or unhandled exception'}, 400)
+    

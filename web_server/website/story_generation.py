@@ -245,9 +245,9 @@ def generate_story(room_code=None):
                             "interests": interests,
                             "genders": genders,
                             "moral_of_the_story": answers[0],
-                            "mode": answers[1],
-                            "main_character_name": answers[2],
-                            "secondary_character_name": answers[3],
+                            "main_character_name": answers[1],
+                            "secondary_character_name": answers[2],
+                            "mode": answers[3],
                             "story_inspiration": answers[4]
                         }
                         

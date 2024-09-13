@@ -3,7 +3,7 @@ import pandas as pd
 from pymongo import MongoClient
 
 
-MONGO_CLIENT = MongoClient('mongodb://10.0.0.6:27017/')
+MONGO_CLIENT = MongoClient('mongodb://10.0.0.7:27017/')
 
 BOOKS_DF = pd.read_csv('./shared/books_data.csv')
 
@@ -27,5 +27,6 @@ with open('./shared/secrets.json', 'r') as file:
     IP = secrets['IP']
     IMAGE_API_PORT = secrets['IMAGE_API_PORT']
     STORY_API_PORT = secrets['STORY_API_PORT']
+    WEB_SERVER_PORT = secrets['WEB_SERVER_PORT']
     IMAGE_API_BASE_URL = f"http://image_rest_api:{IMAGE_API_PORT}/"
     STORY_API_BASE_URL = f"http://story_api:{STORY_API_PORT}/"

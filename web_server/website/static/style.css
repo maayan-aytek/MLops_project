@@ -85,6 +85,11 @@ h1, h2 {
     color: #fff;
 }
 
+h3 {
+    margin: 20px 0;
+    color: #fff;
+}
+
 p {
     color: white;
     line-height: 1.6;
@@ -301,11 +306,18 @@ label {
     position: relative;
 }
 
-
 .book-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    margin-top: 50px;
+  }
+
+/* .book-container {
     grid-area: center;
     text-align: center;
-}
+} */
 
 .book-image {
     /* margin-top: 150px; */
@@ -367,7 +379,33 @@ label {
     flex-direction: column;
 }
 
-.text-input, .select-input {
+.select-input {
+    width: auto;
+    max-width: 100px; /* Small width when closed */
+    overflow: hidden;
+    padding: 5px;
+    border-radius: 15px;
+    border: 2px solid #ccc;
+    background-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    font-size: 1.1em;
+    color: #333;
+    outline: none;
+    transition: width 0.3s ease;
+}
+
+.select-input:focus {
+    border-color: #4CAF50;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+    width: 60%;
+    margin: 0 auto;
+}
+
+select {
+    transition: max-height 0.2s ease;
+}
+
+.text-input {
     width: 80%;
     padding: 15px;
     border-radius: 15px;
@@ -380,15 +418,9 @@ label {
     transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
 }
 
-.text-input:focus, .select-input:focus {
+.text-input:focus {
     border-color: #4CAF50;
     box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
-}
-
-.select-input {
-    height: 50px;
-    padding: 10px;
-    cursor: pointer;
 }
 
 .submit-btn {
@@ -446,7 +478,6 @@ label {
     margin-top: 100px; /* Adjust the value according to your needs */
 }
 
-
 textarea {
     width: 90%;
     height: 80px;
@@ -492,4 +523,28 @@ button:active {
 html, body {
     height: 100%;
     overflow-y: auto;
+}
+
+@keyframes glow {
+    0% {
+        box-shadow: 0 0 40px rgba(255, 255, 255, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 80px rgba(255, 255, 255, 1);
+    }
+    100% {
+        box-shadow: 0 0 40px rgba(255, 255, 255, 0.5);
+    }
+}
+  
+.glowing-book {
+    width: 200px;
+    height: 200px;
+    animation: glow 1.5s ease-in-out infinite alternate;
+    margin: auto;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+    border-radius: 50%; 
+    overflow: hidden;
+    object-fit: cover; 
 }

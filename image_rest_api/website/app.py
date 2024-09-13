@@ -18,7 +18,8 @@ def create_app() -> Flask:
 
     db = MONGO_CLIENT['image_rest_api']
     monitor_collection = db['monitor_health']
-    app.config['MONGO_DB'] = monitor_collection
+    request_collection = db['request_track']
+    request_collection.delete_many({})
     monitor_collection.delete_many({})
     initial_info = {
                 'success': 0,

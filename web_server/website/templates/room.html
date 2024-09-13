@@ -28,7 +28,11 @@
 
     <div class="game-container">
         <div class="book-container">
-            <img src="{{ url_for('static', filename='book_image.png') }}" alt="Magical Book" class="book-image">
+            <img src="{{ url_for('static', filename='book_image.png') }}" alt="Magical Book" id="glowing-book" class="book-image">
+        </div>
+
+        <div id="generating-story-message" style="display: none;">
+            <h2>Generating the story...</h2>
         </div>
 
         <!-- Define 5 participant positions -->
@@ -61,9 +65,6 @@
     <div class="answer-box"></div>
 
     <div id="message-box" style="color: red;"></div>
-    <div id="generating-story-message" style="display: none;">
-        <h2>Generating the story...</h2>
-    </div>
 
 
     <!-------------------------- Java Script -------------------------->
@@ -161,22 +162,25 @@ const sendAnswer = (inputElement, answerBox) => {
     answerBox.style.display = 'none';
 };
 
-  socketio.on("finish_turn", (data) => {
+socketio.on("finish_turn", (data) => {
     if (data.is_last_turn) {
+        // Show the "Generating the story..." message and glowing book
         generatingStoryMessage.style.display = 'block';
-
+        document.getElementById("glowing-book").classList.add("glowing-book");
+        
         // Emit event to generate the story
         socketio.emit("generate_story", { room_code: data.room_code });
 
-        // Hide all other elements
-        document.querySelector('.participant-sections').style.display = 'none';
+        // Hide other elements
         document.querySelector('.question-box').style.display = 'none';
         document.querySelector('.participant-box').style.display = 'none';
         document.querySelector('.answer-box').style.display = 'none';
+
     } else {
+        // Proceed to the next turn
         socketio.emit("next_turn", { room_code: data.room_code });
     }
-  });
+});
 
   socketio.on("unauthorized", (data) => {
     messageBox.innerText = data.message;
@@ -228,7 +232,9 @@ socketio.on("update_participant_data", (data) => {
 
   socketio.on("story", (data) => {
     generatingStoryMessage.style.display = 'none';
-
+    
+    // document.getElementById("generating-story-message").style.display = 'none';
+    document.getElementById("glowing-book").style.display = 'none';  // Hide the glowing book
     // Get the book-container where the image is located
     const bookContainer = document.querySelector('.book-container');
 

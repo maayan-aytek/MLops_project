@@ -28,9 +28,6 @@ def create_app() -> Flask:
     """
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'super-secret'
-    app.config['SUCCESS'] = 0
-    app.config['FAIL'] = 0
-    app.config['START_TIME'] = time.time()
     app.config['image_dict'] = {}
     app.config['rooms'] = {}
     
