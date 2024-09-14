@@ -12,11 +12,14 @@ from flask import Blueprint, render_template, request, Response, current_app
 image_classification = Blueprint('image_classification', __name__)
 
 logger = get_logger()
-# logger.info(f'Classify image: {result}')
 
 @image_classification.route('/classify_image', methods=['GET', 'POST'])
 @login_required
 def classify_image() -> Union[Response, str]:
+    """
+    Classify image route
+    :return: Response object or rendered template
+    """
     if request.method == 'POST':
         image = request.files['image']
         image_filename = image.filename
@@ -43,6 +46,11 @@ def classify_image() -> Union[Response, str]:
 @image_classification.route('/result/<request_id>', methods=['GET', 'POST'])
 @login_required
 def get_result_with_id(request_id) -> Response:
+    """
+    Get result with request id
+    :param request_id: Request id of the image
+    :return: Response object or rendered template
+    """
     if str(request_id) not in current_app.config['image_dict']:
         return create_json_response({'error': {'code': 404, 'message': f"Invalid request id: {request_id}"}},404)
     

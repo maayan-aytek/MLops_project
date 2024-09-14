@@ -1,7 +1,6 @@
 import os 
 import json
 import sys
-import pandas as pd
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from shared.utils import *
 from shared.constants import BOOKS_DF
@@ -14,6 +13,10 @@ story_api = Blueprint('story_api', __name__)
 
 @story_api.route("/get_story", methods=['POST'])
 def get_story():
+    """
+    This function is used to generate a story based on the given details
+    :return: JSON response with the generated story title and body.
+    """
     story_details = request.json.get("story_details", {})
     ages = story_details.get("ages", [])
     interests = story_details.get("interests", [])

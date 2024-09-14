@@ -57,6 +57,11 @@ def logout() -> Response:
 
 
 def check_strong_password(password):
+    """
+    Check if the password is strong enough.
+    :param password: password string
+    :return: tuple of boolean and message
+    """
     if not any(c.isupper() for c in password) or \
        not any(c.islower() for c in password) or \
        not any(c.isdigit() for c in password):

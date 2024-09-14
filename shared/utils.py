@@ -8,7 +8,7 @@ from io import BytesIO
 from string import ascii_uppercase
 import google.generativeai as genai
 from typing import List, Dict, Union
-from flask import jsonify, Response, current_app
+from flask import jsonify, Response
 
 MODEL = None
 
@@ -34,14 +34,16 @@ def create_json_response(data: Union[List, Dict], status_code: int) -> Response:
 
 
 def get_LLM_model():
+    """
+    Get the LLM model from the generative AI API.
+    :return: The generative AI model object.
+    """
     global MODEL
     if MODEL is None:
-        # Load API key from secrets file
         with open(os.path.join('shared', 'secrets.json'), 'r') as file:
             secrets = json.load(file)
             API_KEY = secrets['API_KEY']
 
-        # Configuring Gemini API 
         genai.configure(api_key=API_KEY)
         MODEL = genai.GenerativeModel('gemini-1.5-flash')
 
@@ -49,6 +51,12 @@ def get_LLM_model():
 
 
 def generate_unique_code(length, rooms):
+    """
+    Generate a unique code for a room.
+    :param length: code length
+    :param rooms: existing rooms' codes
+    :return: string of unique code
+    """
     while True:
         code = ""
         for _ in range(length):
@@ -61,6 +69,15 @@ def generate_unique_code(length, rooms):
 
 
 def update_monitor_status(db, success_inc=0, fail_inc=0, running_inc=0, queued_inc=0):
+    """
+    Update the monitor status in the database.
+    :param db: MongoDB database collection
+    :param success_inc: increment of success
+    :param fail_inc: increment of fail
+    :param running_inc: increment of running
+    :param queued_inc: increment of queued
+    :return: None
+    """
     db.update_one(
         {},
         {'$inc': {
@@ -73,6 +90,11 @@ def update_monitor_status(db, success_inc=0, fail_inc=0, running_inc=0, queued_i
 
 
 def monitor_status(db):
+    """
+    Increment the running status of the monitor before running the function and update the status after running.
+    :param db: MongoDB database collection
+    :return: decorator function
+    """
     def decorator_status(func):
         def wrapper(*args, **kwargs):
             update_monitor_status(db, running_inc=1)
@@ -91,6 +113,11 @@ def monitor_status(db):
 
 
 def generate_qr_code(room_url):
+    """
+    Generate a QR code for a room URL.
+    :param room_url: specified room URL
+    :return: qr_base64: base64 encoded QR code
+    """
     qr = qrcode.make(room_url)
     buffered = BytesIO()
     qr.save(buffered, format="PNG")
@@ -99,5 +126,8 @@ def generate_qr_code(room_url):
 
 
 def get_logger():
+    """
+    :return: logger object
+    """
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     return logging.getLogger(__name__)

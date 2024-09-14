@@ -13,13 +13,12 @@ class WebServerTest(unittest.TestCase):
         Set up test variables and URLs.
         This method runs before each test case.
         """
-        self.base_url = 'http://127.0.0.1:8000/'  # URL where your Flask app is running
+        self.base_url = 'http://127.0.0.1:8000/'
         self.login_url = f'{self.base_url}login'
         self.choose_action_url = f'{self.base_url}choose_action'
         self.home_url = f'{self.base_url}home'
         self.about_us_url = f'{self.base_url}about_us'
-        
-        # Example valid user credentials
+
         self.valid_credentials = {'username': 'admin', 'password': 'Aa123'}
 
 
@@ -36,10 +35,8 @@ class WebServerTest(unittest.TestCase):
         """
         Test that an authenticated user is redirected to /choose_action when accessing '/'.
         """
-        # Log in the user
         cookies = self._login()
-        
-        # Access the home route with authentication cookies
+
         response = requests.get(self.base_url, cookies=cookies, allow_redirects=False)
                 
         self.assertEqual(response.status_code, 302)

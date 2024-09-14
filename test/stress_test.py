@@ -22,7 +22,7 @@ class StressTestImageUploadAPITest(unittest.TestCase):
         self.base_url = f'http://127.0.0.1:8000/'
         self.valid_image_file = "uploads/dog.jpg"
         self.login_data = {"username": "admin", "password": "Aa123"}
-        self.T = []  # Stores times for each image classification
+        self.T = []
 
         login_response = requests.post(self.base_url + "login", data=self.login_data, allow_redirects=False)
         self.assertEqual(302, login_response.status_code)
@@ -57,13 +57,11 @@ class StressTestImageUploadAPITest(unittest.TestCase):
                 response = self.classify_image()
                 self.T.append(time.time() - start_time)
 
-
                 self._resp_is_json(response)
                 self.assertIn("matches", response.json())
                 self.assertEqual(200, response.status_code)
-                file.seek(0)  # Reset the file pointer for the next request
+                file.seek(0)
 
-        # Calculate the average time
         self.T = np.array(self.T).mean()
 
 
@@ -71,22 +69,17 @@ class StressTestImageUploadAPITest(unittest.TestCase):
         """
         Test the system under stress by sending 6 parallel synchronous classification requests.
         """
-        # First, calculate the average time for a single classification
         self._test_average_time_to_classify()
-        
-        # Log in and get the session cookies
+
         login_response = requests.post(self.base_url + "login", data=self.login_data, allow_redirects=False)
-        self.assertEqual(302, login_response.status_code)           
+        self.assertEqual(302, login_response.status_code)
 
-
-        # Simulate sending 6 requests in parallel
         start_time = time.time()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [executor.submit(self.classify_image) for _ in range(6)]
             concurrent.futures.wait(futures)
         total_time = time.time() - start_time
 
-        # Assert that the total time doesn't exceed the expected ratio
         print(f"Average time for single image classification: {self.T} seconds")
         print(f"Total time for 6 concurrent requests: {total_time} seconds")
         self.assertLess(total_time, FAST_REPLY_TIME_RATIO * self.T, "Response time exceeds the expected ratio.")

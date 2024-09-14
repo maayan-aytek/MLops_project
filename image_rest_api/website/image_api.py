@@ -60,6 +60,9 @@ def home() -> Response:
 
 @image_api.route('/status', methods=['GET'])
 def status():
+    """
+    :return: A JSON response with the status of the API.
+    """
     montor_dict = monitor_collection.find_one()
     data = {
         'uptime': time.time() - montor_dict['start_time'],
@@ -108,12 +111,22 @@ def upload_image() -> Union[Response, str]:
         
 
 def execute_async_upload_image(image_data):
+    """
+    Execute async image upload and classification.
+    :param image_data:
+    :return: classification result
+    """
     image = PIL.Image.open(BytesIO(image_data))
     classification_result = classify_image(image)
     return classification_result
 
 
 def save_result_to_db(future, request_id):
+    """
+    Save the classification result to the database.
+    :param future: thread
+    :param request_id: request id
+    """
     if future.exception() is not None:
         request_collection.update_one(
         {'request_id': str(request_id)},
