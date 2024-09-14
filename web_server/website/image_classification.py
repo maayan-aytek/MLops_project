@@ -2,7 +2,6 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 import base64
-import logging
 import requests
 from typing import Union
 from shared.utils import *
@@ -12,8 +11,8 @@ from flask import Blueprint, render_template, request, Response, current_app
 
 image_classification = Blueprint('image_classification', __name__)
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
+logger = get_logger()
+# logger.info(f'Classify image: {result}')
 
 @image_classification.route('/classify_image', methods=['GET', 'POST'])
 @login_required
@@ -36,7 +35,6 @@ def classify_image() -> Union[Response, str]:
                 current_app.config['image_dict'][str(request_id)] = base64_image
 
         result = response.json()
-        logging.info(f'Classify image: {result}')
 
         return create_json_response(result, response.status_code)
     return render_template("index.html", user=current_user)

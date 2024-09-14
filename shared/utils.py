@@ -1,11 +1,14 @@
 import os
 import json
+import base64
 import random
+import qrcode
+import logging
+from io import BytesIO
 from string import ascii_uppercase
 import google.generativeai as genai
 from typing import List, Dict, Union
 from flask import jsonify, Response, current_app
-import qrcode
 
 MODEL = None
 
@@ -86,6 +89,15 @@ def monitor_status(db):
     
     return decorator_status
 
+
 def generate_qr_code(room_url):
     qr = qrcode.make(room_url)
-    qr.save(f'static/room_qr_{room_url}.png') 
+    buffered = BytesIO()
+    qr.save(buffered, format="PNG")
+    qr_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+    return qr_base64
+
+
+def get_logger():
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    return logging.getLogger(__name__)

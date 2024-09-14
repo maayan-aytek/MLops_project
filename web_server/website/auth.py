@@ -3,16 +3,15 @@ from typing import Union, Optional
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from shared.utils import create_json_response
+from shared.utils import create_json_response, get_logger
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, login_required, logout_user, current_user
 from flask import Blueprint, render_template, request, flash, redirect, url_for, Response, current_app
 
 auth = Blueprint('auth', __name__)
 
-import logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
+logger = get_logger()
+# logger.info(f'sign-up')
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login() -> Union[Response, str]:
@@ -108,7 +107,6 @@ def sign_up() -> Union[Response, str]:
             db.insert_one(new_user)
             login_user(User(new_user), remember=True)
             flash('Account created!', category='success')
-            logging.info(f'sign-up')
             return redirect(url_for('views.choose_action'))
 
         if message != '':

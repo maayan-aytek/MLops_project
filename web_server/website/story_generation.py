@@ -30,17 +30,17 @@ def handle_room_request():
             if not num_participants:
                 return render_template("handle_room_request.html", error="Please select the number of participants.", nick_name=nickname)
 
-            room = generate_unique_code(4, rooms)
-            rooms[room] = {
+            room_code = generate_unique_code(4, rooms)
+            rooms[room_code] = {
                 "turn_number": 0,
                 "max_participants": int(num_participants),
                 "history": [],
                 "sid_list": [],
                 "nickname_dict": {current_user.username: nickname}
             }
-            session["room"] = room
+            session["room"] = room_code
             
-            return redirect(url_for("story_generation.lobby"))
+            return redirect(url_for("story_generation.lobby", room_code=room_code))
         
         elif action == "join":
             room_code = request.form.get("code")
@@ -56,7 +56,8 @@ def handle_room_request():
             rooms[room_code]['nickname_dict'][current_user.username] = nickname
             session["room"] = room_code
 
-            return redirect(url_for("story_generation.lobby"))
+            return redirect(url_for("story_generation.lobby", room_code=room_code))
+
     
     return render_template("handle_room_request.html")
 
@@ -102,23 +103,23 @@ def connect_lobby():
 
 
 @login_required
-@story_generation.route("/lobby")
-def lobby():
+@story_generation.route("/lobby/<room_code>")
+def lobby(room_code):
     rooms = current_app.config['rooms']
-    room_code = session.get("room")
+    qr_code = generate_qr_code(f'http://127.0.0.1:8000/room/{room_code}')
 
     if room_code is None or rooms[room_code]['nickname_dict'][current_user.username] == '' or room_code not in rooms:
         return redirect(url_for("story_generation.handle_room_request"))
 
     participants_names = list(rooms[room_code]["nickname_dict"].values())
-    return render_template("lobby.html", code=room_code, participants=participants_names, is_full=len(participants_names) >= rooms[room_code]["max_participants"])
+    return render_template("lobby.html", code=room_code, participants=participants_names, qr_code=qr_code, is_full=len(participants_names) >= rooms[room_code]["max_participants"])
 
 
 @socketio.on("connect_room")
 def connect_room():
     rooms = current_app.config['rooms']
     room_code = session.get("room")
-
+    
     if not room_code or not rooms[room_code]['nickname_dict'][current_user.username]:
         return
     if room_code not in rooms:
@@ -126,14 +127,13 @@ def connect_room():
         return
 
     join_room(room_code)
-    emit("redirect_to_room", {"url": url_for("story_generation.room")}, room=request.sid)
+    emit("redirect_to_room", {"url": url_for("story_generation.room", room_code=room_code)}, room=request.sid)
 
 
 @login_required   
-@story_generation.route("/room")
-def room():
+@story_generation.route("/room/<room_code>")
+def room(room_code):
     rooms = current_app.config['rooms']
-    room_code = session.get("room")
     participants = list(rooms[room_code]['nickname_dict'].keys())
 
     if room_code is None or room_code not in rooms:

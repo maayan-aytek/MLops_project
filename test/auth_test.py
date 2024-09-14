@@ -27,7 +27,7 @@ class AuthTest(unittest.TestCase):
             'password2': 'Password1!',
             'gender': 'male',
             'age': 25,
-            'interests': 'football, coding'
+            'interests': ['football', 'coding']
         }
 
 

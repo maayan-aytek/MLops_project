@@ -5,6 +5,11 @@
     <img src="{{ url_for('static', filename='logo.png') }}" alt="CustomTales Logo" class="logo">
     <h1>Lobby<br>Room Code - {{ code }}</h1>
     <br>
+    <div class="qr-code">
+        <h3>Scan to Join the Room:</h3>
+        <img src="data:image/png;base64,{{ qr_code }}" alt="Room QR Code">
+    </div>
+    <br>
     <h2>Waiting for participants to join...</h2>
     <br>
     <div id="participants-list" style="color: white; font-size: large;">
