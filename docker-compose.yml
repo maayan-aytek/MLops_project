@@ -29,8 +29,8 @@ services:
       context: .
       dockerfile: ./image_rest_api/dockerfile
     container_name: image_rest_api
-    ports:
-      - "6000:6000"
+    # ports:
+    #   - "6000:6000"
     networks:
       - app-network
     depends_on:
@@ -41,8 +41,8 @@ services:
       context: .
       dockerfile: ./story_api/dockerfile
     container_name: story_api
-    ports:
-      - "5050:5050"
+    # ports:
+    #   - "5050:5050"
     networks:
       - app-network
     depends_on:

@@ -71,5 +71,5 @@ def create_app() -> Flask:
         Returns:
             Any: A JSON response 
         """
-        return create_json_response({'error': {'code': 401, 'message': 'You unatuhorized access that page, please log in.'}},401)
+        return create_json_response({'error': {'code': 400, 'message': 'You are unauthorized access this page, please log in.'}},400)
     return app

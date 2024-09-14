@@ -20,7 +20,7 @@ def handle_room_request():
     if request.method == "POST":
         nickname = request.form.get("nickname")
         num_participants = request.form.get("participants")
-        action = request.form.get("action")  # Use the action parameter to determine the form submission
+        action = request.form.get("action")  
         rooms = current_app.config['rooms']
 
         if not nickname:
@@ -30,7 +30,6 @@ def handle_room_request():
             if not num_participants:
                 return render_template("handle_room_request.html", error="Please select the number of participants.", nick_name=nickname)
 
-            # Create a new room with a unique code
             room = generate_unique_code(4, rooms)
             rooms[room] = {
                 "turn_number": 0,
@@ -96,11 +95,9 @@ def connect_lobby():
     participants_names = list(rooms[room_code]["nickname_dict"].values())
     is_full = len(participants_names) >= rooms[room_code]['max_participants']
     
-    # add sids
     if request.sid not in rooms[room_code]['sid_list']:
         rooms[room_code]['sid_list'].append(request.sid)
 
-    # Emit updated participants list and full status to the room
     emit('update_participants', {'participants': participants_names, 'is_full': is_full}, room=rooms[room_code]['sid_list'])
 
 
@@ -142,7 +139,6 @@ def room():
     if room_code is None or room_code not in rooms:
         return redirect(url_for("handle_room_request"))
 
-    # define participants order done
     if "participants_order" not in rooms[room_code]:
         rooms[room_code]["participants_order"] = random.sample(participants, len(participants))
 
@@ -182,7 +178,6 @@ def handle_answer(data):
                               "answer":answer}
             rooms[room_code]["history"].append(round_details)
                 
-            # update next turn
             rooms[room_code]['turn_number'] += 1
             is_last_turn = current_turn + 1 == len(QUESTIONS)
 

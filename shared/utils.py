@@ -5,6 +5,7 @@ from string import ascii_uppercase
 import google.generativeai as genai
 from typing import List, Dict, Union
 from flask import jsonify, Response, current_app
+import qrcode
 
 MODEL = None
 
@@ -84,3 +85,7 @@ def monitor_status(db):
         return wrapper
     
     return decorator_status
+
+def generate_qr_code(room_url):
+    qr = qrcode.make(room_url)
+    qr.save(f'static/room_qr_{room_url}.png') 

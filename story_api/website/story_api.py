@@ -13,7 +13,7 @@ model = get_LLM_model()
 story_api = Blueprint('story_api', __name__)
 
 @story_api.route("/get_story", methods=['POST'])
-def get_response():
+def get_story():
     story_details = request.json.get("story_details", {})
     ages = story_details.get("ages", [])
     interests = story_details.get("interests", [])

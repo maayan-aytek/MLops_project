@@ -13,7 +13,7 @@
     <p></p>
     <br>
     <input type="file" id="fileInput">
-    <button onclick="uploadImage()">Upload</button>
+    <button onclick="uploadImage()" id="button">Upload</button>
     <p></p>
     <img id="uploadedImage" src="" alt="Uploaded Image" style="display: none; max-width: 100%; height: auto;">
     <h3 id="classificationResult" style="color: white;"></h3>
@@ -48,7 +48,7 @@
             return;
         }
 
-        fetch('/upload_image', {
+        fetch('/classify_image', {
             method: 'POST',
             body: formData
         })

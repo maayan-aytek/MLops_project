@@ -2,7 +2,10 @@ import os
 import sys
 import time
 import random
+import traceback
 import PIL.Image
+import logging
+import traceback
 from io import BytesIO
 import concurrent.futures
 from typing import Union, Optional
@@ -20,6 +23,9 @@ db = MONGO_CLIENT['image_rest_api']
 monitor_collection = db['monitor_health']
 request_collection = db['request_track']
 
+# Set up the logger
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 def classify_image(img: str) -> Optional[str]:
     """
     Classify an uploaded image.
@@ -29,18 +35,21 @@ def classify_image(img: str) -> Optional[str]:
     Returns:
         Optional[str]: The classification result, or None if classification fails.
     """
-    print('in classify_image')
+    logging.info('In classify_image rest API')
     try:
         response = model.generate_content(["What is the main object in the photo? answer just in one word- the main object", img], stream=True)
         response.resolve()
         classification = response.text
+
+        logging.info(f'Classification result: {classification}')
+
         if classification:
             return {'matches': [{'name': classification, 'score': 0.9}]}
         else:
-            print('else')
+            logging.info('No classification result.')
             return None
     except Exception as e:
-        print(e)
+        logging.error(f'Error during classification: {traceback.format_exc()}')
         return None
 
 
@@ -83,6 +92,9 @@ def upload_image() -> Union[Response, str]:
     Returns:
         Response: A JSON response with the classification result or an error message.
     """
+    with open('./shared/logs.txt', 'a') as file:
+        file.write('in upload_image rest api')
+
     if request.method == 'POST': 
         if 'image' in request.files:
             image = request.files['image']
