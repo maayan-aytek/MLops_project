@@ -24,7 +24,7 @@ sudo docker-compose up –build
   
   ```'PUBLIC_IP' = 40.76.35.49``` , the app will be accessible at: http://40.76.35.49:80</p>
 
-<p>4. Shut down Docker when finished:</p>
+<p>6. Shut down Docker when finished:</p>
 
 ```
 sudo docker-compose down
