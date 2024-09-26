@@ -50,7 +50,7 @@ def get_LLM_model():
     return MODEL
 
 
-def generate_unique_code(length, rooms):
+def generate_unique_code(length: int, rooms: List[str]) -> str:
     """
     Generate a unique code for a room.
     :param length: code length
@@ -68,7 +68,7 @@ def generate_unique_code(length, rooms):
     return code
 
 
-def update_monitor_status(db, success_inc=0, fail_inc=0, running_inc=0, queued_inc=0):
+def update_monitor_status(db, success_inc=0, fail_inc=0, running_inc=0, queued_inc=0) -> None:
     """
     Update the monitor status in the database.
     :param db: MongoDB database collection
@@ -78,15 +78,18 @@ def update_monitor_status(db, success_inc=0, fail_inc=0, running_inc=0, queued_i
     :param queued_inc: increment of queued
     :return: None
     """
-    db.update_one(
-        {},
-        {'$inc': {
-            'success': success_inc,
-            'fail': fail_inc,
-            'running': running_inc,
-            'queued': queued_inc
-        }}
-    )
+    try:
+        db.update_one(
+            {},
+            {'$inc': {
+                'success': success_inc,
+                'fail': fail_inc,
+                'running': running_inc,
+                'queued': queued_inc
+            }}
+        )
+    except Exception as e:
+        raise Exception(f"Failed to update monitor status: {e}")
 
 
 def monitor_status(db):
@@ -112,7 +115,7 @@ def monitor_status(db):
     return decorator_status
 
 
-def generate_qr_code(room_url):
+def generate_qr_code(room_url: str) -> str:
     """
     Generate a QR code for a room URL.
     :param room_url: specified room URL
@@ -125,7 +128,7 @@ def generate_qr_code(room_url):
     return qr_base64
 
 
-def get_logger():
+def get_logger() -> logging.Logger:
     """
     :return: logger object
     """

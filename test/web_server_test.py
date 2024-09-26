@@ -1,5 +1,9 @@
+import os
+import sys
 import unittest
 import requests
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from shared.constants import PUBLIC_IP, WEB_SERVER_PORT
 
 
 class WebServerTest(unittest.TestCase):
@@ -13,7 +17,7 @@ class WebServerTest(unittest.TestCase):
         Set up test variables and URLs.
         This method runs before each test case.
         """
-        self.base_url = 'http://127.0.0.1:8000/'
+        self.base_url = f'http://{PUBLIC_IP}:{WEB_SERVER_PORT}/'
         self.login_url = f'{self.base_url}login'
         self.choose_action_url = f'{self.base_url}choose_action'
         self.home_url = f'{self.base_url}home'

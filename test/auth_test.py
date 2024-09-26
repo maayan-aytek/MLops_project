@@ -1,8 +1,9 @@
-import json
+import os
+import sys
 import unittest
 import requests
-from unittest.mock import patch
-
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.', '..')))
+from shared.constants import PUBLIC_IP, WEB_SERVER_PORT, TEST_PREFIX_UPLOADS_PATH
 
 
 class AuthTest(unittest.TestCase):
@@ -16,9 +17,9 @@ class AuthTest(unittest.TestCase):
         Set up test variables and URLs.
         This method runs before each test case.
         """
-        self.base_url = f'http://127.0.0.1:8000/'
-        self.valid_image_file = "./uploads/dog.jpg"
-        self.invalid_image_file = "./uploads/invalid_image.txt"
+        self.base_url = f'http://{PUBLIC_IP}:{WEB_SERVER_PORT}/'
+        self.valid_image_file = f"{TEST_PREFIX_UPLOADS_PATH}/dog.jpg"
+        self.invalid_image_file = f"{TEST_PREFIX_UPLOADS_PATH}/invalid_image.txt"
         self.login_data = {"username": "admin", "password": "Aa123"}
         self.signup_data = {
             'username': 'new_user',
@@ -26,7 +27,7 @@ class AuthTest(unittest.TestCase):
             'password1': 'Password1!',
             'password2': 'Password1!',
             'gender': 'male',
-            'age': 25,
+            'age': 7,
             'interests': ['football', 'coding']
         }
 
@@ -207,7 +208,7 @@ class AuthTest(unittest.TestCase):
         Test signing up with valid data and then logging in.
         """
         response_signup = requests.post(self.base_url + 'sign-up', data=self.signup_data, allow_redirects=False)
-        self.assertEqual(302, response_signup.status_code)  # Redirected to choose_action after sign-up
+        self.assertEqual(302, response_signup.status_code)  
 
         login_response = requests.post(self.base_url + 'login', data={'username': self.signup_data['username'], 'password': self.signup_data['password1']}, cookies=response_signup.cookies)
         self.assertEqual(401, login_response.status_code)

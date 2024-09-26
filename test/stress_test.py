@@ -5,6 +5,8 @@ import unittest
 import requests
 import numpy as np
 import concurrent.futures
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.', '..')))
+from shared.constants import PUBLIC_IP, WEB_SERVER_PORT, TEST_PREFIX_UPLOADS_PATH
 
 FAST_REPLY_TIME_RATIO = 1.1
 
@@ -19,8 +21,8 @@ class StressTestImageUploadAPITest(unittest.TestCase):
         Set up test variables and URLs.
         This method runs before each test case.
         """
-        self.base_url = f'http://127.0.0.1:8000/'
-        self.valid_image_file = "uploads/dog.jpg"
+        self.base_url = f'http://{PUBLIC_IP}:{WEB_SERVER_PORT}/'
+        self.valid_image_file = f"{TEST_PREFIX_UPLOADS_PATH}/dog.jpg"
         self.login_data = {"username": "admin", "password": "Aa123"}
         self.T = []
 
@@ -74,11 +76,11 @@ class StressTestImageUploadAPITest(unittest.TestCase):
         login_response = requests.post(self.base_url + "login", data=self.login_data, allow_redirects=False)
         self.assertEqual(302, login_response.status_code)
 
-        start_time = time.time()
-        with concurrent.futures.ThreadPoolExecutor() as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+            start_time = time.time()
             futures = [executor.submit(self.classify_image) for _ in range(6)]
             concurrent.futures.wait(futures)
-        total_time = time.time() - start_time
+            total_time = time.time() - start_time
 
         print(f"Average time for single image classification: {self.T} seconds")
         print(f"Total time for 6 concurrent requests: {total_time} seconds")

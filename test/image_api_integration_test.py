@@ -1,8 +1,13 @@
+import os
+import sys
+import time
 import unittest
 import requests
-import time
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.', '..')))
+from shared.constants import PUBLIC_IP, WEB_SERVER_PORT, TEST_PREFIX_UPLOADS_PATH
 
-class ImageUploadAPITest(unittest.TestCase):
+
+class ImageUploadAPIIntegrationTest(unittest.TestCase):
     """
     Test suite for the Image Upload API.
     This suite tests various endpoints of an image upload service including login, image upload,
@@ -13,10 +18,9 @@ class ImageUploadAPITest(unittest.TestCase):
         Set up test variables and URLs. This method runs before each test case.
         Initializes base URLs for the web server and image API, along with paths for valid and invalid test images.
         """
-        self.web_server_base_url = f'http://127.0.0.1:8000/'
-        self.image_api_base_url = f'http://127.0.0.1:8000/'
-        self.valid_image_file = "uploads/dog.jpg"
-        self.invalid_image_file = "uploads/invalid_image.txt"
+        self.web_server_base_url = f'http://{PUBLIC_IP}:{WEB_SERVER_PORT}/'
+        self.valid_image_file = f"{TEST_PREFIX_UPLOADS_PATH}/dog.jpg"
+        self.invalid_image_file = f"{TEST_PREFIX_UPLOADS_PATH}/invalid_image.txt"
         self.login_data = {"username": "admin", "password": "Aa123"}
 
     def _resp_is_json(self, response):

@@ -9,4 +9,4 @@ pymongo==4.8.0
 flask-pymongo==2.3.0
 pandas==1.5.3
 numpy==1.22.0
-qrcode
+qrcode==7.4.2

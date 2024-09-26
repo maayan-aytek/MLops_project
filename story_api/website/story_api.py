@@ -4,7 +4,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from shared.utils import *
 from shared.constants import BOOKS_DF
-from flask import Blueprint, request
+from flask import Blueprint, request, Response
 
 model = get_LLM_model()
 
@@ -12,7 +12,7 @@ model = get_LLM_model()
 story_api = Blueprint('story_api', __name__)
 
 @story_api.route("/get_story", methods=['POST'])
-def get_story():
+def get_story() -> Response:
     """
     This function is used to generate a story based on the given details
     :return: JSON response with the generated story title and body.
@@ -20,17 +20,21 @@ def get_story():
     story_details = request.json.get("story_details", {})
     ages = story_details.get("ages", [])
     interests = story_details.get("interests", [])
-    sampled_interest = random.choices(interests, k=1)[0]
+    sampled_interest = random.choices(interests, k=1)[0] if interests else ""
     genders = story_details.get("genders", [])
     moral_of_the_story = story_details.get("moral_of_the_story", "")
     mode = story_details.get("mode", "")
     main_character_name = story_details.get("main_character_name", "")
     secondary_character_name = story_details.get("secondary_character_name", "")
     similar_story = story_details.get("story_inspiration", "Ignored")
-    similar_story_description = "" if similar_story == "Ignored" else BOOKS_DF[BOOKS_DF['Name'] == similar_story]['Description'].values[0]
+    similar_story_description = "" 
+    if similar_story == "Ignored":
+        book_desription = BOOKS_DF[BOOKS_DF['Name'] == similar_story]['Description']
+        if len(book_desription) > 0:
+            similar_story_description = book_desription.values[0]
     
-    if not all([moral_of_the_story, mode, main_character_name, secondary_character_name, similar_story]):
-        return create_json_response({'error': {'code': 401, 'message': 'One of the deatils field is miising!'}}, 401)
+    if not all([ages, moral_of_the_story, mode, main_character_name, secondary_character_name, similar_story]):
+        return create_json_response({'error': {'code': 401, 'message': 'One of the details field is missing!'}}, 401)
 
     story_reading_time = 2
 

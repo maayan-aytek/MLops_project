@@ -1,14 +1,13 @@
 import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-import time
 from flask import Flask
 from typing import Dict, Any
 from flask_socketio import SocketIO
 from shared.constants import MONGO_CLIENT
 from flask_login import LoginManager, current_user
 
-socketio = SocketIO()
+socketio = SocketIO(async_mode="threading")
 
 def create_app() -> Flask:
     from .auth import auth

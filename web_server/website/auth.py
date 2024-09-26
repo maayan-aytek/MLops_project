@@ -1,7 +1,7 @@
-from .models import User
-from typing import Union, Optional
-import sys
 import os
+from .models import User
+from typing import Union, Tuple
+import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from shared.utils import create_json_response, get_logger
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -11,7 +11,6 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 auth = Blueprint('auth', __name__)
 
 logger = get_logger()
-# logger.info(f'sign-up')
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login() -> Union[Response, str]:
@@ -56,7 +55,7 @@ def logout() -> Response:
     return render_template('home.html')
 
 
-def check_strong_password(password):
+def check_strong_password(password: str) -> Tuple[bool, str]:
     """
     Check if the password is strong enough.
     :param password: password string

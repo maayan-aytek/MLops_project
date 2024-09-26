@@ -2,12 +2,10 @@ import os
 import sys
 import time
 import random
-import traceback
 import PIL.Image
-import traceback
 from io import BytesIO
 import concurrent.futures
-from typing import Union, Optional
+from typing import Union, Optional, Dict, Any
 from flask import Blueprint, request, redirect, url_for, Response, current_app
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from shared.utils import *
@@ -24,7 +22,7 @@ request_collection = db['request_track']
 
 logger = get_logger()
 
-def classify_image(img: str) -> Optional[str]:
+def classify_image(img: str) -> Optional[Dict]:
     """
     Classify an uploaded image.
     This function uses the Gemini API to classify the main object in an image.
@@ -59,7 +57,7 @@ def home() -> Response:
 
 
 @image_api.route('/status', methods=['GET'])
-def status():
+def status() -> Response:
     """
     :return: A JSON response with the status of the API.
     """
@@ -110,7 +108,7 @@ def upload_image() -> Union[Response, str]:
             return create_json_response({'error': {'code': 400, 'message': 'No image found in request'}}, 400)
         
 
-def execute_async_upload_image(image_data):
+def execute_async_upload_image(image_data: bytes) -> Dict[str, Any]:
     """
     Execute async image upload and classification.
     :param image_data:
@@ -121,7 +119,7 @@ def execute_async_upload_image(image_data):
     return classification_result
 
 
-def save_result_to_db(future, request_id):
+def save_result_to_db(future: Any, request_id: str) -> None:
     """
     Save the classification result to the database.
     :param future: thread
@@ -140,7 +138,7 @@ def save_result_to_db(future, request_id):
                 {'$set': {'status': 'completed', 'classification_result': result}},
             )
         except Exception as e:
-            print(f"Error processing request {request_id}: {e}")
+            raise Exception(f"Error processing request {request_id}: {e}")
 
 
 @image_api.route('/async_upload', methods=['POST'])
@@ -174,7 +172,7 @@ def async_upload() -> Union[Response, str]:
 
 
 @image_api.route('/result/<request_id>', methods=['GET'])
-def get_result_with_id(request_id) -> Response:
+def get_result_with_id(request_id: str) -> Response:
     """
     Retrieve the result for a specific request ID.
     This view returns a 404 error if the specified request ID does not exist.

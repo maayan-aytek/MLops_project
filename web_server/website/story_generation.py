@@ -125,7 +125,7 @@ def connect_lobby():
 
 @login_required
 @story_generation.route("/lobby/<room_code>")
-def lobby(room_code):
+def lobby(room_code: str):
     """
     Renders the lobby page for a specific room.
     Generates a QR code for the room and displays the list of participants.
@@ -137,7 +137,7 @@ def lobby(room_code):
         Response: Renders the lobby page or redirects to the room request page if the room is invalid.
     """
     rooms = current_app.config['rooms']
-    qr_code = generate_qr_code(f'http://127.0.0.1:8000/room/{room_code}')
+    qr_code = generate_qr_code(WEB_SERVER_URL + f'room/{room_code}')
 
     if room_code is None or rooms[room_code]['nickname_dict'][current_user.username] == '' or room_code not in rooms:
         return redirect(url_for("story_generation.handle_room_request"))
@@ -168,7 +168,7 @@ def connect_room():
 
 @login_required
 @story_generation.route("/room/<room_code>")
-def room(room_code):
+def room(room_code: str):
     """
     Renders the room page for a specific room.
     Initializes the participant order if it hasn't been set.
@@ -253,7 +253,7 @@ def handle_answer(data):
 
 
 @socketio.on("next_turn")
-def next_turn(room_code=None):
+def next_turn(room_code: str = None):
     """
     Moves the game to the next turn and emits the next question to the participants.
     Determines the current participant's turn and emits the current question and options to the room.
@@ -285,7 +285,7 @@ def next_turn(room_code=None):
 
 
 @socketio.on("generate_story")
-def generate_story(room_code=None):
+def generate_story(room_code: str = None):
     """
     Generates a story based on participants' answers and emits the final story to the room.
     Collects data such as ages, interests, and answers to questions, sends them to an external story generation API,
