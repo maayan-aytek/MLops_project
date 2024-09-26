@@ -12,7 +12,7 @@
 git clone https://github.com/maayan-aytek/MLops_project.git
 ```
 
-<p>2. Modify the configurations in  ```shared/secrets.json```  to match your setup. For example, update  ```'PUBLIC_IP'```  with your machine's public IP. By default, the web server port is set to 80, but you can adjust it as needed.</p>
+<p>2. Modify the configurations in shared/secrets.json to match your setup. For example, update PUBLIC_IP' with your machine's public IP. By default, the web server port is set to 80, but you can adjust it as needed.</p>
 
 <p>3. Build and run the Docker containers:</p>
 
