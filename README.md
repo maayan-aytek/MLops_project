@@ -22,9 +22,7 @@ sudo docker-compose up –build
 
 <p>5. Once the setup is complete, access the app using the link shown in the terminal. For example, if 
   
-  ```'PUBLIC_IP' = 40.76.35.49```
-  
-  , the app will be accessible at: http://40.76.35.49:80</p>
+  ```'PUBLIC_IP' = 40.76.35.49``` , the app will be accessible at: http://40.76.35.49:80</p>
 
 <p>4. Shut down Docker when finished:</p>
 
