@@ -1,13 +1,10 @@
 from website.app import create_app, socketio
-import json 
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.', '..')))
+from shared.constants import IP, WEB_SERVER_PORT
 
 app = create_app()
 
 if __name__ == '__main__':
-    with open('./shared/secrets.json', 'r') as file:
-        secrets = json.load(file)
-        API_KEY = secrets['API_KEY']
-        IP = secrets['IP']
-        WEB_PORT = secrets['WEB_SERVER_PORT']
-
-    socketio.run(app, debug=True, host=IP, port=WEB_PORT, use_reloader=False, allow_unsafe_werkzeug=True)
+    socketio.run(app, debug=True, host=IP, port=WEB_SERVER_PORT, use_reloader=False, allow_unsafe_werkzeug=True)

@@ -20,7 +20,6 @@ db = MONGO_CLIENT['image_rest_api']
 monitor_collection = db['monitor_health']
 request_collection = db['request_track']
 
-logger = get_logger()
 
 def classify_image(img: str) -> Optional[Dict]:
     """
@@ -87,9 +86,6 @@ def upload_image() -> Union[Response, str]:
     Returns:
         Response: A JSON response with the classification result or an error message.
     """
-    with open('./shared/logs.txt', 'a') as file:
-        file.write('in upload_image rest api')
-
     if request.method == 'POST': 
         if 'image' in request.files:
             image = request.files['image']
@@ -103,7 +99,7 @@ def upload_image() -> Union[Response, str]:
             if classification_result is not None:
                 return create_json_response(classification_result, 200)
             else:
-                return create_json_response({'error': {'code': 401, 'message': 'Classification failed'}}, 401)
+                return create_json_response({'error': {'code': 400, 'message': 'Classification failed'}}, 400)
         else:
             return create_json_response({'error': {'code': 400, 'message': 'No image found in request'}}, 400)
         
@@ -182,7 +178,6 @@ def get_result_with_id(request_id: str) -> Response:
     Returns:
         Response: A JSON response with the classification result or the current status.
     """
-    # Check if the request_id exists in the database
     request_data = request_collection.find_one({'request_id': request_id})
     
     if not request_data:
@@ -199,8 +194,7 @@ def get_result_with_id(request_id: str) -> Response:
         return create_json_response(classification_result, 200)
 
     elif status == 'failed':
-        return create_json_response({'error': {'code': 401, 'message': 'Classification failed'}, 'status': 'failed'}, 200)
+        return create_json_response({'error': {'code': 400, 'message': 'Classification failed'}, 'status': 'error'}, 200)
 
     else:
-        return create_json_response({'error': 'Unknown error or unhandled exception'}, 400)
-    
+        return create_json_response({'error': {'code': 400, 'message': 'Unknown error or unhandled exception'}}, 400)

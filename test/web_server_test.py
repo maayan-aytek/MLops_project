@@ -2,7 +2,7 @@ import os
 import sys
 import unittest
 import requests
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.', '..')))
 from shared.constants import PUBLIC_IP, WEB_SERVER_PORT
 
 

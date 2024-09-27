@@ -1,10 +1,9 @@
 from website.app import create_app
-import json
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.', '..')))
+from shared.constants import IMAGE_API_PORT, IP
 
-with open('./shared/secrets.json', 'r') as file:
-    secrets = json.load(file)
-    IP = secrets['IP']
-    IMAGE_API_PORT = secrets['IMAGE_API_PORT']
 
 app = create_app()
 

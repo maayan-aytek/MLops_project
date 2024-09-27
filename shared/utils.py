@@ -1,5 +1,5 @@
 import os
-import json
+import sys
 import base64
 import random
 import qrcode
@@ -9,6 +9,8 @@ from string import ascii_uppercase
 import google.generativeai as genai
 from typing import List, Dict, Union
 from flask import jsonify, Response
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '.', '..')))
+from shared.constants import API_KEY
 
 MODEL = None
 
@@ -40,10 +42,6 @@ def get_LLM_model():
     """
     global MODEL
     if MODEL is None:
-        with open(os.path.join('shared', 'secrets.json'), 'r') as file:
-            secrets = json.load(file)
-            API_KEY = secrets['API_KEY']
-
         genai.configure(api_key=API_KEY)
         MODEL = genai.GenerativeModel('gemini-1.5-flash')
 

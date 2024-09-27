@@ -30,6 +30,7 @@ class StoryAPITest(unittest.TestCase):
             'story_inspiration': ''  # Missing required field
         }
 
+
     def test_valid_story_generation(self):
         response = requests.post(self.base_url + 'get_story', json={"story_details": self.valid_story_details})
         self.assertEqual(200, response.status_code)
@@ -39,11 +40,13 @@ class StoryAPITest(unittest.TestCase):
         self.assertIsInstance(response_data['title'], str)
         self.assertIsInstance(response_data['story'], str)
 
+
     def test_invalid_story_details(self):
         response = requests.post(self.base_url + 'get_story', json={"story_details": self.invalid_story_details})
         self.assertEqual(401, response.status_code)
         response_data = response.json()
         self.assertEqual(response_data['error']['code'], 401)
+
 
     def test_missing_fields(self):
         missing_fields_cases = [

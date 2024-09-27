@@ -23,12 +23,14 @@ class ImageUploadAPIIntegrationTest(unittest.TestCase):
         self.invalid_image_file = f"{TEST_PREFIX_UPLOADS_PATH}/invalid_image.txt"
         self.login_data = {"username": "admin", "password": "Aa123"}
 
+
     def _resp_is_json(self, response):
         """
         Helper method to check if the response content is in JSON format.
         :param response: Response object to check.
         """
         self.assertEqual("application/json", response.headers.get("Content-Type", ""))
+
 
     def test_sync_authorized_upload(self):
         """
@@ -54,7 +56,8 @@ class ImageUploadAPIIntegrationTest(unittest.TestCase):
             self.assertIsInstance(match, dict)
             self.assertTrue({'name', 'score'} == set(match.keys()))
 
-    def test_async_authorized_upload(self):
+
+    def test_async_request(self):
         """
         Test case for uploading a valid image using asynchronous method with valid login credentials.
         Verifies that a request ID is returned, and the status code is 202 (Accepted).
@@ -71,6 +74,7 @@ class ImageUploadAPIIntegrationTest(unittest.TestCase):
         self._resp_is_json(async_response)
         self.assertIn("request_id", async_response.json())
         self.assertEqual(202, async_response.status_code)
+
 
     def test_async_upload(self):
         """
@@ -102,6 +106,7 @@ class ImageUploadAPIIntegrationTest(unittest.TestCase):
         else:
             self.fail("Asynchronous classification did not complete in time.")
 
+
     def test_unauthorized_upload(self):
         """
         Test case for uploading an image without logging in.
@@ -114,6 +119,7 @@ class ImageUploadAPIIntegrationTest(unittest.TestCase):
                                          data={'method': method})
             self._resp_is_json(response)
             self.assertEqual(400, response.status_code)
+
 
     def test_invalid_image_upload(self):
         """
@@ -132,6 +138,7 @@ class ImageUploadAPIIntegrationTest(unittest.TestCase):
 
             self._resp_is_json(response)
             self.assertEqual(400, response.status_code)
+
 
     def test_missing_image(self):
         """
