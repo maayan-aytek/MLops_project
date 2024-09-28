@@ -13,6 +13,11 @@ git clone https://github.com/maayan-aytek/MLops_project.git
 ```
 
 <p>2. Modify the configurations in shared/config.json to match your setup. For example, update PUBLIC_IP' with your machine's public IP. By default, the web server port is set to 80, but you can adjust it as needed.</p>
+<p>5. In addition, insert to this file your Gemini API key:</p>
+
+```
+"API_KEY": "YOUR_KEY"
+```
 
 <p>3. Build and run the Docker containers:</p>
 
