@@ -197,13 +197,13 @@ class ImageUploadAPITest(unittest.TestCase):
         self._check_error_structure(response.json())
 
 
-    # def test_upload_async_empty_file(self):
-    #     """
-    #     Test case for uploading empty image (async mode)
-    #     """
-    #     response = requests.post(self.image_api_base_url + "async_upload", files={'image': ('empty_image.jpg', io.BytesIO(), 'image/jpeg')})
-    #     self.assertEqual(response.status_code, 400)
-    #     self._check_error_structure(response.json())
+    def test_upload_async_empty_file(self):
+        """
+        Test case for uploading empty image (async mode)
+        """
+        response = requests.post(self.image_api_base_url + "async_upload", files={'image': ('empty_image.jpg', io.BytesIO(), 'image/jpeg')})
+        self.assertEqual(response.status_code, 400)
+        self._check_error_structure(response.json())
 
 
 if __name__ == "__main__":
