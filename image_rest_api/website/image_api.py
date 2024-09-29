@@ -95,6 +95,8 @@ def upload_image() -> Union[Response, str]:
                 return create_json_response({'error': {'code': 400, 'message': "The filename empty"}},400)
             if image.filename.split('.')[1].lower() not in ['png', 'jpg', 'jpeg']: # Unsupported file
                 return create_json_response({'error': {'code': 400, 'message': "Support image in format ['png', 'jpg', 'jpeg']"}}, 400)
+            if image.read() == b'':
+                return create_json_response({'error': {'code': 400, 'message': 'The uploaded image is empty'}}, 400)
             classification_result = classify_image(PIL.Image.open(image))
             if classification_result is not None:
                 return create_json_response(classification_result, 200)
@@ -102,7 +104,7 @@ def upload_image() -> Union[Response, str]:
                 return create_json_response({'error': {'code': 400, 'message': 'Classification failed'}}, 400)
         else:
             return create_json_response({'error': {'code': 400, 'message': 'No image found in request'}}, 400)
-        
+
 
 def execute_async_upload_image(image_data: bytes) -> Dict[str, Any]:
     """
@@ -151,10 +153,12 @@ def async_upload() -> Union[Response, str]:
     if 'image' not in request.files:
         return create_json_response({'error': {'code': 400, 'message': 'No image found in request'}}, 400)
     
-    image = request.files['image']
+    image = request.files['image'] 
     if '.' not in image.filename or image.filename.split('.')[1].lower() not in ['png', 'jpg', 'jpeg']:
         return create_json_response({'error': {'code': 400, 'message': "Support image in format ['png', 'jpg', 'jpeg']"}}, 400)
-    image_data = image.read() 
+    image_data = image.read()
+    if image_data == b'':
+        return create_json_response({'error': {'code': 400, 'message': 'The uploaded image is empty'}}, 400)
 
     request_id = random.randint(10000, 1000000)
     with concurrent.futures.ThreadPoolExecutor() as executor:

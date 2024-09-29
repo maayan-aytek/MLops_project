@@ -1,4 +1,5 @@
 import os
+import io
 import sys
 import time
 import random
@@ -185,6 +186,24 @@ class ImageUploadAPITest(unittest.TestCase):
         self.assertEqual(404, result_response.status_code)
         self._check_error_structure(result_response.json())
         self.assertEqual(result_response.json()['error']['message'], 'ID not found')
+
+
+    def test_upload_sync_empty_file(self):
+        """
+        Test case for uploading empty image (sync mode)
+        """
+        response = requests.post(self.image_api_base_url + "upload_image", files={'image': ('empty_image.jpg', io.BytesIO(), 'image/jpeg')})
+        self.assertEqual(response.status_code, 400)
+        self._check_error_structure(response.json())
+
+
+    # def test_upload_async_empty_file(self):
+    #     """
+    #     Test case for uploading empty image (async mode)
+    #     """
+    #     response = requests.post(self.image_api_base_url + "async_upload", files={'image': ('empty_image.jpg', io.BytesIO(), 'image/jpeg')})
+    #     self.assertEqual(response.status_code, 400)
+    #     self._check_error_structure(response.json())
 
 
 if __name__ == "__main__":

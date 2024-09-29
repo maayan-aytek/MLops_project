@@ -124,6 +124,39 @@ def connect_lobby():
 
 
 @login_required
+@story_generation.route("/qr_lobby/<room_code>") 
+def qr_lobby(room_code: str):
+    """Handling lobby fron QR code 
+
+    Args:
+        room_code (str): The code of the room.
+
+    Returns:
+        Response: Renders the lobby page or redirects to the room request page if the room is invalid.
+    """
+    nickname = current_user.username
+    rooms = current_app.config['rooms']
+    if not room_code:
+        return render_template("handle_room_request.html", error="Please enter a room code.",
+                                nick_name=nickname)
+    if room_code not in rooms:
+        return render_template("handle_room_request.html", error="Room does not exist.", nick_name=nickname,
+                                code=room_code)
+
+    n_members = len(rooms[room_code]['nickname_dict'])
+    if n_members >= rooms[room_code]['max_participants']:
+        return render_template("handle_room_request.html",
+                                error="The room is already full, please create a new room.", nickname=nickname,
+                                code=room_code)
+
+    rooms[room_code]['nickname_dict'][current_user.username] = nickname
+    session["room"] = room_code
+
+    return redirect(url_for("story_generation.lobby", room_code=room_code))
+
+
+
+@login_required
 @story_generation.route("/lobby/<room_code>")
 def lobby(room_code: str):
     """
@@ -137,7 +170,7 @@ def lobby(room_code: str):
         Response: Renders the lobby page or redirects to the room request page if the room is invalid.
     """
     rooms = current_app.config['rooms']
-    qr_code = generate_qr_code(WEB_SERVER_URL + f'room/{room_code}')
+    qr_code = generate_qr_code(WEB_SERVER_URL + f'qr_lobby/{room_code}')
 
     if room_code is None or rooms[room_code]['nickname_dict'][current_user.username] == '' or room_code not in rooms:
         return redirect(url_for("story_generation.handle_room_request"))
